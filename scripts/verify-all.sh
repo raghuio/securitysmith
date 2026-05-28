@@ -33,9 +33,19 @@ else
     check_info "Fix: cd src-tauri && cargo fmt"
 fi
 
-# ─── 2. Rust Linting (Clippy) ─────────────────────────────────
+# ─── 2. Rust Dependency Audit ─────────────────────────────────
 echo ""
-echo "🔍 2. Rust linting (cargo clippy)"
+echo "📦 2. Rust dependency audit (cargo audit)"
+if (cd src-tauri && cargo audit --quiet > /dev/null 2>&1); then
+    check_ok "No known Rust dependency vulnerabilities"
+else
+    check_fail "Dependency vulnerabilities detected"
+    check_info "Fix: cd src-tauri && cargo audit"
+fi
+
+# ─── 3. Rust Linting (Clippy) ─────────────────────────────────
+echo ""
+echo "🔍 3. Rust linting (cargo clippy)"
 if (cd src-tauri && cargo clippy -- -D warnings > /dev/null 2>&1); then
     check_ok "No clippy warnings"
 else
@@ -43,36 +53,56 @@ else
     check_info "Fix: cd src-tauri && cargo clippy"
 fi
 
-# ─── 3. Rust Compilation ──────────────────────────────────────
+# ─── 4. Rust Compilation ──────────────────────────────────────
 echo ""
-echo "🔨 3. Rust compilation (cargo check)"
+echo "🔨 4. Rust compilation (cargo check)"
 if (cd src-tauri && cargo check > /dev/null 2>&1); then
     check_ok "Compiles successfully"
 else
     check_fail "Compilation failed"
 fi
 
-# ─── 4. Rust Unit Tests ───────────────────────────────────────
+# ─── 5. Rust Unit Tests ───────────────────────────────────────
 echo ""
-echo "🧪 4. Rust unit tests (cargo test)"
+echo "🧪 5. Rust unit tests (cargo test)"
 if (cd src-tauri && cargo test --quiet > /dev/null 2>&1); then
     check_ok "All tests passed"
 else
     check_fail "Tests failed"
 fi
 
-# ─── 5. Frontend Build ────────────────────────────────────────
+# ─── 6. Frontend Formatting ─────────────────────────────────
 echo ""
-echo "🌐 5. Frontend build (npm run build)"
+echo "📐 6. Frontend formatting (prettier --check)"
+if (npx prettier --check "src/**/*.{ts,tsx}" > /dev/null 2>&1); then
+    check_ok "Prettier formatting clean"
+else
+    check_fail "Prettier formatting violations detected"
+    check_info "Fix: npx prettier --write 'src/**/*.{ts,tsx}'"
+fi
+
+# ─── 7. Frontend Build ────────────────────────────────────────
+echo ""
+echo "🌐 7. Frontend build (npm run build)"
 if (npm run build > /dev/null 2>&1); then
     check_ok "Frontend builds successfully"
 else
     check_fail "Frontend build failed"
 fi
 
-# ─── 6. Security Scan (Semgrep — local rules, no network) ──────
+# ─── 8. Frontend Dependency Audit ─────────────────────────────
 echo ""
-echo "🔒 6. Security static analysis (semgrep — local cached rules)"
+echo "📦 8. Frontend dependency audit (npm audit)"
+if (npm audit --audit-level=high > /dev/null 2>&1); then
+    check_ok "No high/critical frontend dependency vulnerabilities"
+else
+    check_fail "Frontend dependency vulnerabilities detected"
+    check_info "Fix: npm audit fix"
+fi
+
+# ─── 9. Security Scan (Semgrep — local rules, no network) ──────
+echo ""
+echo "🔒 9. Security static analysis (semgrep — local cached rules)"
 echo "     Rules:    .semgrep/rules/rust/"
 echo "               .semgrep/rules/typescript/"
 echo "               .semgrep/rules/javascript/"
@@ -111,9 +141,9 @@ if [ -d ".semgrep/rules" ]; then
     fi
 fi
 
-# ─── 7. Build Artifacts ───────────────────────────────────────
+# ─── 10. Build Artifacts ──────────────────────────────────────
 echo ""
-echo "📦 7. Build artifact verification"
+echo "📦 10. Build artifact verification"
 if [ -f "src-tauri/target/release/bundle/deb/securitysmith_0.1.0_amd64.deb" ]; then
     check_ok "deb package exists"
 else
