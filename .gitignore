@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+/docs
+AGENTS.md
+
+# Semgrep local config and cached rules (never commit)
+.semgrep/
+.semgrep.yml
