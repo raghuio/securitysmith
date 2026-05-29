@@ -2,7 +2,7 @@ pub mod commands;
 pub mod db;
 pub mod state;
 
-use commands::auth;
+use commands::{auth, settings};
 use state::AppState;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -14,6 +14,10 @@ pub fn run() {
             auth::is_vault_initialized,
             auth::create_vault,
             auth::unlock_vault,
+            settings::get_setting,
+            settings::set_setting,
+            settings::list_settings,
+            settings::test_ollama_connection,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -8,9 +8,14 @@ const host = process.env.TAURI_DEV_HOST;
 export default defineConfig(async () => ({
   plugins: [react()],
 
-  // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
-  //
-  // 1. prevent Vite from obscuring rust errors
+  // Relative base path required for Tauri production builds (tauri:// protocol)
+  base: "./",
+
+  // ES2020 target for WebKitGTK compatibility on Linux
+  build: {
+    target: "ES2020",
+  },
+
   clearScreen: false,
   // 2. tauri expects a fixed port, fail if that port is not available
   server: {
