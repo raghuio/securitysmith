@@ -100,13 +100,9 @@ else
     check_info "Fix: npm audit fix"
 fi
 
-# ─── 9. Security Scan (Semgrep — local rules, no network) ──────
+# ─── 9. Security Scan (Semgrep — local rules, updated daily) ──────
 echo ""
-echo "🔒 9. Security static analysis (semgrep — local cached rules)"
-echo "     Rules:    .semgrep/rules/rust/"
-echo "               .semgrep/rules/typescript/"
-echo "               .semgrep/rules/javascript/"
-echo "               .semgrep/rules/generic/secrets/"
+echo "🔒 9. Security static analysis (semgrep — local cached rules, updated daily)"
 
 # Auto-download on first run if rules are missing
 if [ ! -d ".semgrep/rules" ]; then
@@ -118,6 +114,26 @@ if [ ! -d ".semgrep/rules" ]; then
         ERRORS=$((ERRORS + 1))
     fi
 fi
+
+# Update rules daily if older than 24 hours
+if [ -d ".semgrep/rules/.git" ]; then
+    if [ ! -f ".semgrep/rules/.last_update" ] || [ "$(find .semgrep/rules/.last_update -mtime +0 2>/dev/null)" ]; then
+        check_info "Updating Semgrep rules (daily check)..."
+        if (cd .semgrep/rules && git pull --ff-only > /dev/null 2>&1); then
+            touch .semgrep/rules/.last_update
+            check_ok "Rules updated"
+        else
+            check_info "Rule update failed (proceeding with cached rules)"
+            touch .semgrep/rules/.last_update
+        fi
+    fi
+fi
+
+echo "     Check rules:"
+echo "               .semgrep/rules/rust/"
+echo "               .semgrep/rules/typescript/"
+echo "               .semgrep/rules/javascript/"
+echo "               .semgrep/rules/generic/secrets/"
 
 if [ -d ".semgrep/rules" ]; then
     SEMGREP_OUTPUT=$(semgrep \
