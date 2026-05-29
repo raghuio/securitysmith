@@ -117,10 +117,14 @@ mod tests {
             drop(conn);
         }
 
-        // Re-open with wrong key must fail
+        // SQLCipher logs "HMAC check failed" to stderr when the wrong key
+        // is used. This is expected — we are proving the vault rejects
+        // invalid passwords.
+        //
+        // NOTE: stderr noise here is harmless. SQLCipher verifies the key
+        // by trying a page-1 decrypt, and that HMAC mismatch triggers
+        // internal logging we can't suppress without a C library patch.
         let result = open_vault(tmp.path(), "wrong_key");
         assert!(result.is_err());
-
-        // Cleanup handled by TempDir drop
     }
 }
