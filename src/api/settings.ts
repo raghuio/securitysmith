@@ -17,6 +17,10 @@ export async function listSettings(): Promise<SettingEntry[]> {
   return invoke<SettingEntry[]>("list_settings");
 }
 
+export async function getBootTheme(): Promise<string> {
+  return invoke<string>("get_boot_theme");
+}
+
 export async function testOllamaConnection(url: string): Promise<boolean> {
   return invoke<boolean>("test_ollama_connection", { url });
 }

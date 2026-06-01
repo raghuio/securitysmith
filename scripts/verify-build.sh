@@ -1,9 +1,13 @@
 #!/usr/bin/env bash
 # SecuritySmith Build Verification — Produces real installable artifacts.
-# This runs `npm run tauri build`, which compiles the Rust binary + bundles.
+# This runs `cargo tauri build`, which compiles the Rust binary + bundles.
 # Slow: ~3-5 minutes. Run after verify-all.sh passes, before releasing.
 #
-# Usage: ./scripts/verify-build.sh
+# Usage:
+#   ./scripts/verify-build.sh         Build all bundles
+#   ./scripts/verify-build.sh deb     Build .deb package only
+#   ./scripts/verify-build.sh linux   Build Linux bundles (.deb + .AppImage)
+#   ./scripts/verify-build.sh appimage  Build .AppImage only
 
 set -euo pipefail
 
@@ -18,16 +22,30 @@ check_ok() { printf "  ${GREEN}✓${NC} %s\n" "$1"; }
 check_fail() { printf "  ${RED}✗${NC} %s\n" "$1"; ERRORS=$((ERRORS + 1)); }
 check_info() { printf "  ${YELLOW}!${NC} %s\n" "$1"; }
 
+# ─── Parse argument ─────────────────────────────────────────
+TARGET="${1:-all}"
+BUNDLE_FLAG=""
+
+if [ "$TARGET" = "linux" ]; then
+    BUNDLE_FLAG="--bundles deb,appimage"
+elif [ "$TARGET" = "deb" ] || [ "$TARGET" = "appimage" ]; then
+    BUNDLE_FLAG="--bundles $TARGET"
+elif [ "$TARGET" != "all" ]; then
+    echo "Unknown target: $TARGET"
+    echo "Usage: $0 [deb|linux|appimage]"
+    exit 1
+fi
+
 echo "═══════════════════════════════════════════════════════════════"
 echo "  SecuritySmith Build Verification"
-echo "  Produces real installable artifacts (slow)."
+echo "  Target: $TARGET"
 echo "═══════════════════════════════════════════════════════════════"
 
-# ─── 1. Clean and build ───────────────────────────────────────
+# ─── 1. Build ─────────────────────────────────────────────────
 echo ""
-echo "🔨 1. Running npm run tauri build (this may take a few minutes)..."
+echo "🔨 1. Running Tauri build (this may take a few minutes)..."
 echo ""
-if (npm run tauri build > /tmp/tauri-build.log 2>&1); then
+if (npx tauri build $BUNDLE_FLAG > /tmp/tauri-build.log 2>&1); then
     check_ok "Tauri build completed"
 else
     check_fail "Tauri build failed"
@@ -66,26 +84,33 @@ BUNDLES=0
 
 if [ -f "src-tauri/target/release/bundle/deb/securitysmith_0.1.0_amd64.deb" ]; then
     SIZE=$(du -sh src-tauri/target/release/bundle/deb/securitysmith_0.1.0_amd64.deb | cut -f1)
-    check_ok "deb package ($SIZE)"
+    check_ok ".deb package ($SIZE)"
     BUNDLES=$((BUNDLES + 1))
 else
-    check_fail ".deb missing"
-fi
-
-if [ -f "src-tauri/target/release/bundle/rpm/securitysmith-0.1.0-1.x86_64.rpm" ]; then
-    SIZE=$(du -sh src-tauri/target/release/bundle/rpm/securitysmith-0.1.0-1.x86_64.rpm | cut -f1)
-    check_ok "rpm package ($SIZE)"
-    BUNDLES=$((BUNDLES + 1))
-else
-    check_fail ".rpm missing"
+    if [ "$TARGET" = "all" ] || [ "$TARGET" = "linux" ] || [ "$TARGET" = "deb" ]; then
+        check_fail ".deb missing"
+    fi
 fi
 
 if [ -f "src-tauri/target/release/bundle/appimage/securitysmith_0.1.0_amd64.AppImage" ]; then
     SIZE=$(du -sh src-tauri/target/release/bundle/appimage/securitysmith_0.1.0_amd64.AppImage | cut -f1)
-    check_ok "AppImage ($SIZE)"
+    check_ok ".AppImage ($SIZE)"
     BUNDLES=$((BUNDLES + 1))
 else
-    check_fail ".AppImage missing"
+    if [ "$TARGET" = "all" ] || [ "$TARGET" = "linux" ] || [ "$TARGET" = "appimage" ]; then
+        check_fail ".AppImage missing"
+    fi
+fi
+
+# .rpm is only expected when building all bundles
+if [ "$TARGET" = "all" ]; then
+    if [ -f "src-tauri/target/release/bundle/rpm/securitysmith-0.1.0-1.x86_64.rpm" ]; then
+        SIZE=$(du -sh src-tauri/target/release/bundle/rpm/securitysmith-0.1.0-1.x86_64.rpm | cut -f1)
+        check_ok ".rpm package ($SIZE)"
+        BUNDLES=$((BUNDLES + 1))
+    else
+        check_fail ".rpm missing"
+    fi
 fi
 
 # ─── 5. Rust tests ────────────────────────────────────────────

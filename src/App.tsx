@@ -1,15 +1,36 @@
 import { useState } from "react";
+import { MantineProvider } from "@mantine/core";
+import { Notifications } from "@mantine/notifications";
 import { UnlockScreen } from "./components/UnlockScreen";
 import { AppShell } from "./components/AppShell";
+import { getBootTheme } from "./api/settings";
 
 function App() {
-  const [unlocked, setUnlocked] = useState(false);
+  const [screen, setScreen] = useState<"unlock" | "app">("unlock");
+  const [colorScheme, setColorScheme] = useState<"light" | "dark">("light");
 
-  if (!unlocked) {
-    return <UnlockScreen onUnlocked={() => setUnlocked(true)} />;
-  }
+  const handleUnlocked = async () => {
+    try {
+      const theme = await getBootTheme();
+      if (theme === "light" || theme === "dark") {
+        setColorScheme(theme);
+      }
+    } catch {
+      // Keep default light on error
+    }
+    setScreen("app");
+  };
 
-  return <AppShell />;
+  return (
+    <MantineProvider defaultColorScheme={colorScheme}>
+      <Notifications position="top-right" />
+      {screen === "unlock" ? (
+        <UnlockScreen onUnlocked={handleUnlocked} />
+      ) : (
+        <AppShell />
+      )}
+    </MantineProvider>
+  );
 }
 
 export default App;

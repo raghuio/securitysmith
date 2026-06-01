@@ -1,7 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { MantineProvider } from "@mantine/core";
 import "@mantine/core/styles.css";
+import "@mantine/notifications/styles.css";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import App from "./App";
 import "./App.css";
@@ -15,9 +15,7 @@ if (fallback) fallback.remove();
 ReactDOM.createRoot(root).render(
   <React.StrictMode>
     <ErrorBoundary>
-      <MantineProvider defaultColorScheme="light">
-        <App />
-      </MantineProvider>
+      <App />
     </ErrorBoundary>
   </React.StrictMode>,
 );

@@ -1,5 +1,5 @@
 use crate::state::AppState;
-use rusqlite::{params, OptionalExtension};
+use rusqlite::{OptionalExtension, params};
 use serde::Serialize;
 use std::time::Duration;
 use tauri::State;
@@ -106,6 +106,40 @@ pub fn list_settings(state: State<AppState>) -> Result<Vec<SettingEntry>, String
         .map_err(|e| format!("Database error: {}", e))?;
 
     Ok(results)
+}
+
+/// Read the stored appearance theme for boot-time provider sync.
+/// Returns "light" or "dark". Defaults to "light" if missing or invalid.
+/// Requires the vault to be unlocked.
+#[tauri::command]
+pub fn get_boot_theme(state: State<AppState>) -> Result<String, String> {
+    let vault = state
+        .vault
+        .lock()
+        .map_err(|_| "Internal state error".to_string())?;
+    let conn = vault.as_ref().ok_or("Vault not unlocked")?;
+
+    let value: Option<String> = conn
+        .query_row(
+            "SELECT value FROM settings WHERE key = 'appearance.theme'",
+            [],
+            |row| row.get(0),
+        )
+        .optional()
+        .map_err(|e| format!("Database error: {}", e))?;
+
+    match value.as_deref() {
+        Some("dark") => Ok("dark".to_string()),
+        Some("light") => Ok("light".to_string()),
+        Some(other) => {
+            eprintln!(
+                "Warning: invalid theme value '{}', defaulting to light",
+                other
+            );
+            Ok("light".to_string())
+        }
+        None => Ok("light".to_string()),
+    }
 }
 
 /// Test connectivity to a local Ollama instance.

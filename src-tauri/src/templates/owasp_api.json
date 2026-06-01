@@ -1,0 +1,52 @@
+[
+  {
+    "name": "API1:2023-Broken Object Level Auth",
+    "subcategory": "owasp-api-2023",
+    "content": "{\"title\":\"Broken Object Level Authorization\",\"severity\":\"critical\",\"overview\":\"API endpoints fail to enforce object-level authorization.\",\"summary\":\"Most common and severe API vulnerability.\",\"affected_endpoints\":[{\"method\":\"GET\",\"path\":\"/api/v1/receipts/{id}\",\"description\":\"Receipt ID manipulable\"}],\"evidence\":[{\"title\":\"BOLA on receipts\",\"request\":\"GET /api/v1/receipts/9999\",\"response\":\"200 OK with victim receipt data\"}],\"impact_items\":[{\"title\":\"Unauthorized Data Access\",\"explanation\":\"Access any object by ID.\"}],\"remediation_items\":[{\"action\":\"Auth checks\",\"fix\":\"Verify user owns the object.\",\"code_snippet\":null}],\"steps_to_reproduce\":\"1. Authenticate as User A. 2. Access User B object. 3. Observe data.\",\"references\":[{\"title\":\"OWASP API1\",\"url\":\"https://owasp.org/API-Security/editions/2023/en/0xa1/\"}]}"
+  },
+  {
+    "name": "API2:2023-Broken Authentication",
+    "subcategory": "owasp-api-2023",
+    "content": "{\"title\":\"Broken Authentication\",\"severity\":\"critical\",\"overview\":\"Authentication mechanisms implemented incorrectly.\",\"summary\":\"Weak passwords, token leakage, weak JWT signing.\",\"affected_endpoints\":[{\"method\":\"POST\",\"path\":\"/api/v1/auth/login\",\"description\":\"No rate limiting\"}],\"evidence\":[{\"title\":\"Weak JWT\",\"request\":\"GET /profile with alg=none token\",\"response\":\"200 OK\"}],\"impact_items\":[{\"title\":\"Account Takeover\",\"explanation\":\"Compromise passwords/tokens.\"}],\"remediation_items\":[{\"action\":\"Strong tokens\",\"fix\":\"Use RS256/ES256 JWT.\",\"code_snippet\":null}],\"steps_to_reproduce\":\"1. Analyze JWT. 2. Change alg to none. 3. Verify acceptance.\",\"references\":[{\"title\":\"OWASP API2\",\"url\":\"https://owasp.org/API-Security/editions/2023/en/0xa2/\"}]}"
+  },
+  {
+    "name": "API3:2023-Broken Object Property Auth",
+    "subcategory": "owasp-api-2023",
+    "content": "{\"title\":\"Broken Object Property Authorization\",\"severity\":\"high\",\"overview\":\"APIs expose more object properties than allowed.\",\"summary\":\"Extra fields returned or mass assignment possible.\",\"affected_endpoints\":[{\"method\":\"GET\",\"path\":\"/api/v1/users/me\",\"description\":\"Returns sensitive fields\"}],\"evidence\":[{\"title\":\"Exposed admin flag\",\"request\":\"GET /users/me\",\"response\":\"200 OK with isAdmin and passwordHash\"}],\"impact_items\":[{\"title\":\"Privilege Escalation\",\"explanation\":\"Modify hidden fields.\"}],\"remediation_items\":[{\"action\":\"Use DTOs\",\"fix\":\"Control exposed and accepted fields.\",\"code_snippet\":null}],\"steps_to_reproduce\":\"1. GET /users/me. 2. Observe sensitive fields. 3. PUT isAdmin=true.\",\"references\":[{\"title\":\"OWASP API3\",\"url\":\"https://owasp.org/API-Security/editions/2023/en/0xa3/\"}]}"
+  },
+  {
+    "name": "API4:2023-Unrestricted Resource Consumption",
+    "subcategory": "owasp-api-2023",
+    "content": "{\"title\":\"Unrestricted Resource Consumption\",\"severity\":\"high\",\"overview\":\"APIs lack protections against excessive resource use.\",\"summary\":\"No rate limiting, quotas, or resource controls.\",\"affected_endpoints\":[{\"method\":\"POST\",\"path\":\"/api/v1/reports/generate\",\"description\":\"Expensive report generation\"}],\"evidence\":[{\"title\":\"No rate limit\",\"request\":\"POST /reports/generate\",\"response\":\"202 Accepted immediately\"}],\"impact_items\":[{\"title\":\"DoS\",\"explanation\":\"Exhaust resources and crash.\"}],\"remediation_items\":[{\"action\":\"Rate limiting\",\"fix\":\"Limit per user/IP.\",\"code_snippet\":null}],\"steps_to_reproduce\":\"1. Send rapid requests. 2. Observe no throttling.\",\"references\":[{\"title\":\"OWASP API4\",\"url\":\"https://owasp.org/API-Security/editions/2023/en/0xa4/\"}]}"
+  },
+  {
+    "name": "API5:2023-Broken Function Level Auth",
+    "subcategory": "owasp-api-2023",
+    "content": "{\"title\":\"Broken Function Level Authorization\",\"severity\":\"high\",\"overview\":\"APIs lack function-level permission checks.\",\"summary\":\"Misconfigured ACLs or missing role validation.\",\"affected_endpoints\":[{\"method\":\"DELETE\",\"path\":\"/api/v1/admin/users\",\"description\":\"Accessible to normal users\"}],\"evidence\":[{\"title\":\"Admin endpoint accessible\",\"request\":\"DELETE /admin/users/123\",\"response\":\"200 OK\"}],\"impact_items\":[{\"title\":\"Privilege Escalation\",\"explanation\":\"Normal users perform admin actions.\"}],\"remediation_items\":[{\"action\":\"Deny by default\",\"fix\":\"Check roles before sensitive functions.\",\"code_snippet\":null}],\"steps_to_reproduce\":\"1. Authenticate as standard user. 2. Send admin requests. 3. Observe success.\",\"references\":[{\"title\":\"OWASP API5\",\"url\":\"https://owasp.org/API-Security/editions/2023/en/0xa5/\"}]}"
+  },
+  {
+    "name": "API6:2023-Unrestricted Business Flows",
+    "subcategory": "owasp-api-2023",
+    "content": "{\"title\":\"Unrestricted Access to Sensitive Business Flows\",\"severity\":\"medium\",\"overview\":\"APIs expose business flows without compensating controls.\",\"summary\":\"Automated abuse of purchasing, ticketing.\",\"affected_endpoints\":[{\"method\":\"POST\",\"path\":\"/api/v1/orders\",\"description\":\"Bulk order creation\"}],\"evidence\":[{\"title\":\"Unlimited orders\",\"request\":\"POST /orders\",\"response\":\"201 Created repeatedly\"}],\"impact_items\":[{\"title\":\"Business Loss\",\"explanation\":\"Inventory manipulation.\"}],\"remediation_items\":[{\"action\":\"Device fingerprinting\",\"fix\":\"CAPTCHA, rate limiting.\",\"code_snippet\":null}],\"steps_to_reproduce\":\"1. Identify sensitive flows. 2. Automate requests.\",\"references\":[{\"title\":\"OWASP API6\",\"url\":\"https://owasp.org/API-Security/editions/2023/en/0xa6/\"}]}"
+  },
+  {
+    "name": "API7:2023-SSRF",
+    "subcategory": "owasp-api-2023",
+    "content": "{\"title\":\"Server-Side Request Forgery (SSRF)\",\"severity\":\"high\",\"overview\":\"APIs fetch remote resources without URL validation.\",\"summary\":\"Attacker coerces server to make requests to internal services.\",\"affected_endpoints\":[{\"method\":\"POST\",\"path\":\"/api/v1/webhook/register\",\"description\":\"URL not validated\"}],\"evidence\":[{\"title\":\"AWS metadata access\",\"request\":\"POST /webhook with 169.254.169.254\",\"response\":\"200 with IAM credentials\"}],\"impact_items\":[{\"title\":\"Internal Network Access\",\"explanation\":\"Access internal services.\"}],\"remediation_items\":[{\"action\":\"Deny by default\",\"fix\":\"Block private IPs, use allowlists.\",\"code_snippet\":null}],\"steps_to_reproduce\":\"1. Identify fetch endpoints. 2. Supply internal URLs.\",\"references\":[{\"title\":\"OWASP API7\",\"url\":\"https://owasp.org/API-Security/editions/2023/en/0xa7/\"}]}"
+  },
+  {
+    "name": "API8:2023-Security Misconfiguration",
+    "subcategory": "owasp-api-2023",
+    "content": "{\"title\":\"Security Misconfiguration\",\"severity\":\"medium\",\"overview\":\"APIs deployed with insecure defaults.\",\"summary\":\"Verbose errors, unnecessary methods, default accounts.\",\"affected_endpoints\":[{\"method\":\"OPTIONS\",\"path\":\"/\",\"description\":\"Verbose server info\"}],\"evidence\":[{\"title\":\"Stack trace leakage\",\"request\":\"GET /users/search?sort=invalid\",\"response\":\"500 with stack trace\"}],\"impact_items\":[{\"title\":\"Information Disclosure\",\"explanation\":\"Reveal internal details.\"}],\"remediation_items\":[{\"action\":\"Harden config\",\"fix\":\"Disable unnecessary features.\",\"code_snippet\":null}],\"steps_to_reproduce\":\"1. Send malformed requests. 2. Observe verbose errors.\",\"references\":[{\"title\":\"OWASP API8\",\"url\":\"https://owasp.org/API-Security/editions/2023/en/0xa8/\"}]}"
+  },
+  {
+    "name": "API9:2023-Improper Inventory",
+    "subcategory": "owasp-api-2023",
+    "content": "{\"title\":\"Improper Inventory Management\",\"severity\":\"medium\",\"overview\":\"APIs expose outdated or undocumented endpoints.\",\"summary\":\"Old versions, test endpoints less secure.\",\"affected_endpoints\":[{\"method\":\"GET\",\"path\":\"/api/v1/test/users\",\"description\":\"Test endpoint still active\"}],\"evidence\":[{\"title\":\"Old API version\",\"request\":\"GET /api/v0/users/1\",\"response\":\"200 with plaintext password\"}],\"impact_items\":[{\"title\":\"Data Breach\",\"explanation\":\"Old endpoints weaker security.\"}],\"remediation_items\":[{\"action\":\"Maintain inventory\",\"fix\":\"Document and retire old versions.\",\"code_snippet\":null}],\"steps_to_reproduce\":\"1. Discover hidden endpoints. 2. Test deprecated versions.\",\"references\":[{\"title\":\"OWASP API9\",\"url\":\"https://owasp.org/API-Security/editions/2023/en/0xa9/\"}]}"
+  },
+  {
+    "name": "API10:2023-Unsafe API Consumption",
+    "subcategory": "owasp-api-2023",
+    "content": "{\"title\":\"Unsafe Consumption of APIs\",\"severity\":\"high\",\"overview\":\"APIs consume third-party data without validation.\",\"summary\":\"Injection via compromised external APIs.\",\"affected_endpoints\":[{\"method\":\"POST\",\"path\":\"/api/v1/integrations/fetch\",\"description\":\"External data consumed\"}],\"evidence\":[{\"title\":\"Unsanitized external data\",\"request\":\"GET /profile/picture\",\"response\":\"URL contains javascript:alert(1)\"}],\"impact_items\":[{\"title\":\"Injection Attacks\",\"explanation\":\"XSS, SQLi from third parties.\"}],\"remediation_items\":[{\"action\":\"Validate external data\",\"fix\":\"Treat third-party data as untrusted.\",\"code_snippet\":null}],\"steps_to_reproduce\":\"1. Identify third-party integrations. 2. Inject payloads.\",\"references\":[{\"title\":\"OWASP API10\",\"url\":\"https://owasp.org/API-Security/editions/2023/en/0xaa/\"}]}"
+  }
+]
