@@ -23,9 +23,9 @@ dist-ssr
 *.sln
 *.sw?
 
-/docs
-AGENTS.md
-
 # Semgrep local config and cached rules (never commit)
 .semgrep/
 .semgrep.yml
+
+.ai/
+AGENTS.md
