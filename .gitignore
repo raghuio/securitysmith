@@ -27,5 +27,6 @@ dist-ssr
 .semgrep/
 .semgrep.yml
 
+/target/
 .ai/
 AGENTS.md

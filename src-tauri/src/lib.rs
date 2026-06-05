@@ -1,17 +1,19 @@
-pub mod commands;
-pub mod crypto;
-pub mod db;
-pub mod parsers;
-pub mod report_engine;
-pub mod state;
-
-use commands::{
-    activity_log, ai, analytics, attachments, auth, calendar, checklists, clients, compliance,
-    contacts, credentials, documents, email, engagements, findings, findings_import, invoices,
-    news, notifications, portability, reports, retests, scope, search, settings, templates,
-    time_entries,
+use securitysmith_core::commands::{
+    activity_log, attachments, auth, clients, contacts, credentials, engagements, findings, findings_import, notifications, portability, retests, scope, search, settings,
 };
-use state::AppState;
+use securitysmith_core::state::AppState;
+use securitysmith_templates::templates;
+use securitysmith_reports::reports;
+use securitysmith_documents::documents;
+use securitysmith_invoices::invoices;
+use securitysmith_ai::ai;
+use securitysmith_analytics::analytics;
+use securitysmith_calendar::calendar;
+use securitysmith_news::news;
+use securitysmith_checklists::checklists;
+use securitysmith_compliance::compliance;
+use securitysmith_time_tracking::time_entries;
+use securitysmith_email::email;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -119,7 +121,6 @@ pub fn run() {
             portability::decrypt_import_to_temp,
             portability::preview_import,
             portability::execute_import,
-            // PROP-020 Evidence Attachments
             attachments::upload_attachment,
             attachments::list_attachments,
             attachments::delete_attachment,
@@ -128,26 +129,22 @@ pub fn run() {
             attachments::read_attachment_file,
             attachments::get_attachment_thumbnail,
             attachments::get_total_attachment_storage,
-            // PROP-021 Client Contacts
             contacts::list_contacts,
             contacts::get_contact,
             contacts::create_contact,
             contacts::update_contact,
             contacts::delete_contact,
-            // PROP-022 Retest Remediation
             retests::create_retest_engagement,
             retests::list_retest_engagements,
             retests::get_retest_comparison,
             retests::bulk_update_finding_status,
             retests::get_overdue_findings,
-            // PROP-023 Scope Assets
             scope::list_scope_items,
             scope::create_scope_item,
             scope::update_scope_item,
             scope::delete_scope_item,
             scope::bulk_import_scope_items,
             scope::export_scope_text,
-            // PROP-024 Time Tracking
             time_entries::list_time_entries,
             time_entries::create_time_entry,
             time_entries::update_time_entry,
@@ -155,7 +152,6 @@ pub fn run() {
             time_entries::get_weekly_summary,
             time_entries::get_budget_status,
             time_entries::create_invoice_from_time,
-            // PROP-025 Analytics
             analytics::get_severity_distribution,
             analytics::get_top_categories,
             analytics::get_findings_over_time,
@@ -164,7 +160,6 @@ pub fn run() {
             analytics::get_engagement_timeline,
             analytics::get_time_by_activity,
             analytics::get_budget_vs_actual,
-            // PROP-027 Methodology Checklists
             checklists::list_checklists,
             checklists::get_checklist_items,
             checklists::create_checklist,
@@ -173,14 +168,11 @@ pub fn run() {
             checklists::get_engagement_checklist,
             checklists::update_engagement_checklist_item,
             checklists::get_checklist_coverage,
-            // PROP-028 Global Search
             search::global_search,
             search::rebuild_search_index_command,
-            // PROP-029 Notification Center
             notifications::get_notifications,
             notifications::dismiss_notification,
             notifications::get_notification_count,
-            // PROP-030 Compliance Mapping
             compliance::list_frameworks,
             compliance::list_controls,
             compliance::create_framework,

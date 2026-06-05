@@ -1,0 +1,20 @@
+[package]
+name = "securitysmith-reports"
+description = "SecuritySmith component"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+name = "securitysmith_reports"
+
+[dependencies]
+rusqlite = { workspace = true }
+printpdf = { workspace = true }
+ss-report-engine = { workspace = true }
+ss-core = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tauri = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }

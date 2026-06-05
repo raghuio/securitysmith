@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { MantineProvider } from "@mantine/core";
 import { Notifications } from "@mantine/notifications";
-import { UnlockScreen } from "./components/UnlockScreen";
-import { AppShell } from "./components/AppShell";
-import { getBootTheme } from "./api/settings";
+import { UnlockScreen } from "./core/components/UnlockScreen";
+import { AppShell } from "./core/components/AppShell";
+import { getBootTheme } from "./core/api/settings";
 
 function App() {
   const [screen, setScreen] = useState<"unlock" | "app">("unlock");

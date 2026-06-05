@@ -1,0 +1,8 @@
+# Clippy configuration for SecuritySmith
+# See https://doc.rust-lang.org/clippy/lints.html
+
+warn-on-all-wildcard-imports = true
+
+cognitive-complexity-threshold = 30
+
+too-many-arguments-threshold = 8

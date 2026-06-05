@@ -1,47 +1,34 @@
 [package]
 name = "securitysmith"
 version = "0.1.0"
-description = "Privacy-first desktop application for security consultants and pentesters"
-authors = ["you"]
+description = "A desktop application for managing security engagements. Designed for security consultants and pentesters"
+authors = ["Raghunath"]
 edition = "2024"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [lib]
-# The `_lib` suffix may seem redundant but it is necessary
-# to make the lib name unique and wouldn't conflict with the bin name.
-# This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
 name = "securitysmith_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
-tauri-build = { version = "2", features = [] }
+tauri-build = { workspace = true, features = [] }
 
 [dependencies]
-tauri = { version = "2", features = [] }
-tauri-plugin-opener = "2"
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-rusqlite = { version = "0.39.0", features = ["bundled-sqlcipher-vendored-openssl"] }
-argon2 = { version = "0.5.3", features = ["std"] }
-bip39 = { version = "2", default-features = false }
-aes-gcm = { version = "0.10", features = ["aes"] }
-aead = { version = "0.5" }
-rand = "0.10.1"
-hex = "0.4.3"
-tokio = { version = "1.52.3", features = ["rt"] }
-reqwest = { version = "0.13.3", features = ["json"] }
-rss = "2.0"
-quick-xml = { version = "0.37.5", features = ["serialize"] }
-csv = "1.3.1"
-lettre = { version = "0.11.15", default-features = false, features = ["smtp-transport", "tokio1", "tokio1-rustls-tls", "builder", "mime03"] }
-chrono = "0.4.41"
-base64 = "0.22.1"
-printpdf = "0.7.0"
-zip = { version = "2", default-features = false, features = ["deflate"] }
-sha2 = "0.10"
-image = { version = "0.25", default-features = false, features = ["jpeg", "png", "webp"] }
-
-[dev-dependencies]
-tempfile = "3.27.0"
-
+tauri = { workspace = true, features = [] }
+tauri-plugin-opener = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+ss-core = { workspace = true }
+ss-parsers = { workspace = true }
+ss-report-engine = { workspace = true }
+ss-templates = { workspace = true }
+ss-reports = { workspace = true }
+ss-documents = { workspace = true }
+ss-invoices = { workspace = true }
+ss-ai = { workspace = true }
+ss-analytics = { workspace = true }
+ss-calendar = { workspace = true }
+ss-news = { workspace = true }
+ss-checklists = { workspace = true }
+ss-compliance = { workspace = true }
+ss-time-tracking = { workspace = true }
+ss-email = { workspace = true }

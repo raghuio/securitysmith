@@ -1,0 +1,10 @@
+# Rustfmt configuration for SecuritySmith
+# https://rust-lang.github.io/rustfmt/
+
+edition = "2024"
+max_width = 100
+tab_spaces = 4
+use_small_heuristics = "Default"
+reorder_imports = true
+group_imports = "StdExternalCrate"
+imports_granularity = "Module"
