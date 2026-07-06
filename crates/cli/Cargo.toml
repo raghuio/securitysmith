@@ -1,0 +1,14 @@
+[package]
+name = "securitysmith"
+version.workspace = true
+edition.workspace = true
+
+[[bin]]
+name = "sm"
+path = "src/main.rs"
+
+[dependencies]
+clap = { workspace = true }
+ss-workspace = { workspace = true }
+camino = { workspace = true }
+dirs = { workspace = true }
