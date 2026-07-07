@@ -32,9 +32,12 @@ The `sm` binary is produced in `target/release/sm`.
 ## Quick start
 
 ```bash
-# Create a workspace
-sm new ~/clients/acme-2026
-cd ~/clients/acme-2026
+# Set the default workspace root (optional)
+sm config set default_workspace_root ~/securitysmith
+
+# Create a workspace under the default root
+sm new --name acme-2026
+cd ~/securitysmith/acme-2026
 
 # Add a client
 sm client add --short acme --display "Acme Corporation"
@@ -46,18 +49,25 @@ sm client list
 ## Workspace layout
 
 ```
-~/clients/acme-2026/
-├── securitysmith.toml
-└── clients/
-    └── acme/
-        └── client.toml
+~/securitysmith/
+└── acme-2026/
+    ├── securitysmith.toml
+    └── clients/
+        └── acme/
+            └── client.toml
 ```
 
 ## Configuration
 
-Global config lives at `~/.config/securitysmith/config.toml` and stores:
+Global config lives at the OS default config location under `securitysmith/config.toml`:
 
-- `default_workspace_root` — default parent directory for `sm new --name ...`
+- Linux: `~/.config/securitysmith/config.toml`
+- macOS: `~/Library/Application Support/securitysmith/config.toml`
+- Windows: `%APPDATA%\securitysmith\config.toml`
+
+It stores:
+
+- `default_workspace_root` — default parent directory for `sm new --name ...` (defaults to `~/securitysmith` if not set)
 - known workspaces
 
 ## Status
