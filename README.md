@@ -2,6 +2,11 @@
 
 SecuritySmith is a command-line tool for security consultants and penetration testers to manage client work using plain-text files.
 
+Core principles:
+
+- **Secure by default.** No network calls, no telemetry, no hidden data sharing, no plaintext secrets, and no unsafe defaults.
+- **User data must always be safe.** Portable workspaces, simple backups, explicit confirmation for destructive actions, and no silent data corruption.
+
 > ⚠️ Work in progress. Core features are being rebuilt as a CLI and the codebase is not yet ready for production use.
 
 ## What it is today
