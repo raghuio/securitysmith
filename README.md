@@ -1,105 +1,65 @@
 # SecuritySmith
 
-SecuritySmith is an open-source command-line tool for security consultants and penetration testers. It helps you manage the full pentesting lifecycle — from client and project setup to scope capture, findings, report generation, and retest tracking — using plain text files on your local machine.
+SecuritySmith is a command-line tool for security consultants and penetration testers to manage client work using plain-text files.
 
-> ⚠️ This is a **Work in Progress** project. Core features are being rebuilt as a CLI, and the codebase is not yet ready for production use.
+> ⚠️ Work in progress. Core features are being rebuilt as a CLI and the codebase is not yet ready for production use.
 
-## What SecuritySmith Is
+## What it is today
 
-A **CLI-first tool** for security consultants and penetration testers. Your work lives in:
+A single Rust binary named `sm` that creates and manages a local workspace of files:
 
-- **TOML files** for configuration and structured data
-- **Markdown files with YAML frontmatter** for findings, notes, requirements, reports, and Statements of Work
+- **TOML** for configuration and structured metadata
+- **Markdown with YAML frontmatter** for notes and content
+- **Filesystem directories** for the client → project → engagement hierarchy
 
-Everything is stored locally, is git-friendly, and can be edited with any text editor.
+Everything is stored locally and is git-friendly.
 
-## What SecuritySmith Is Not
+## What is implemented
 
-- A desktop application with a graphical user interface — it is a command-line tool
-- A multi-user web application or SaaS — single user, local machine
-- A cloud-hosted service — your data never leaves your machine by design
-- A generic project management tool like Jira or Trello — we serve security consultants specifically
-- A vulnerability scanner — we import and manage findings, we do not run scans
-- A password manager or credential vault (Phase 1; a secure credential store may be added later)
-- A social network, bug bounty marketplace, or collaboration platform
-- An AI chatbot — use your preferred coding agent or editor AI inside the project folder instead
+- `sm new [path]` — create a workspace
+- `sm here` — show the current workspace
+- `sm config` / `sm config set` — manage global configuration
+- `sm client add|list|rm|rename|move` — manage clients
 
-## Quick Start
+## Build
 
 ```bash
-# Clone and build the project
-git clone <repo-url>
-cd securitysmith
 cargo build --release
-
-# Create a workspace and start tracking an engagement
-securitysmith init ~/clients/acme-2026
-cd ~/clients/acme-2026
-securitysmith client add
-securitysmith project add --client acme
-securitysmith engagement add --client acme --project webapp
-securitysmith finding add --engagement webapp
-securitysmith report --pdf
 ```
 
-## Commands
+The `sm` binary is produced in `target/release/sm`.
 
-| Command | Purpose |
-|---------|---------|
-| `securitysmith init [path]` | Create a new workspace |
-| `securitysmith client add` | Add a client |
-| `securitysmith project add` | Add a project under a client |
-| `securitysmith engagement add` | Add an engagement under a project |
-| `securitysmith finding add` | Add a finding |
-| `securitysmith requirement add` | Capture a requirement |
-| `securitysmith scope add` | Add an in-scope or out-of-scope asset |
-| `securitysmith report` | Generate a report |
-| `securitysmith sow` | Generate a Statement of Work |
-| `securitysmith validate` | Check workspace health |
+## Quick start
 
-## Project Structure
+```bash
+# Create a workspace
+sm new ~/clients/acme-2026
+cd ~/clients/acme-2026
+
+# Add a client
+sm client add --short acme --display "Acme Corporation"
+
+# List clients
+sm client list
+```
+
+## Workspace layout
 
 ```
 ~/clients/acme-2026/
 ├── securitysmith.toml
 └── clients/
     └── acme/
-        ├── client.toml
-        └── projects/
-            └── webapp/
-                └── engagements/
-                    └── initial/
-                        ├── engagement.toml
-                        ├── requirements.toml
-                        ├── scope.toml
-                        ├── findings/
-                        ├── notes/
-                        ├── report/
-                        └── sow/
+        └── client.toml
 ```
 
-## Feature Roadmap & Status
+## Configuration
 
-| Feature | Status | Description |
-|---------|--------|-------------|
-| CLI workspace and entity management | 🚧 In Progress | `init`, `client`, `project`, `engagement` commands |
-| Requirements and scope capture | 🚧 In Progress | TOML-based requirements and asset tracking |
-| Findings as Markdown with frontmatter | 🚧 In Progress | Write findings in Markdown, query them like data |
-| Report generation (Markdown, PDF) | 📋 Planned | Generate client reports from findings and templates |
-| Statement of Work generation | 📋 Planned | Generate SOWs from requirements and scope |
-| Template library | 📋 Planned | Reusable Markdown templates |
-| Methodology checklists | 📋 Later | Pass/fail/not-tested tracking |
-| Time tracking | 📋 Later | Log hours and summaries |
-| Encrypted credential store | 📋 Later | Secure local credential storage |
-| Full-text search | 📋 Later | Search across the workspace |
-| CLI dashboard | 📋 Later | Summary views from frontmatter data |
-| Calendar views | 📋 Later | Timeline views from dates |
-| Invoice generation | 📋 Later | Generate invoices from time data |
+Global config lives at `~/.config/securitysmith/config.toml` and stores:
 
-## Philosophy
+- `default_workspace_root` — default parent directory for `sm new --name ...`
+- known workspaces
 
-- **Privacy first.** No external APIs for data processing. No telemetry. No cloud sync.
-- **Local data ownership.** You own your data, your reports, your findings. Always.
-- **Plain text by default.** Files you can read, diff, version, and back up with standard tools.
-- **CLI driven.** Fast, keyboard-first workflows for consultants who live in terminals and editors.
-- **Stable at scale.** From one engagement to thousands — same model, same reliability.
+## Status
+
+This project is pivoting from a Tauri desktop application to a pure CLI. Only the commands listed under *What is implemented* are functional. The rest of the pentesting lifecycle (projects, engagements, findings, reports, SOWs, exports, backups) is being rebuilt.
