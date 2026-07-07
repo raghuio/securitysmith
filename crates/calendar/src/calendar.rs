@@ -1,4 +1,4 @@
-use securitysmith_core::state::AppState;
+use ss_core::state::AppState;
 use rusqlite::Connection;
 use serde::Serialize;
 use tauri::State;
@@ -29,7 +29,7 @@ pub struct Reminder {
 fn do_list_calendar_events(conn: &Connection) -> Result<Vec<CalendarEvent>, String> {
     let mut stmt = conn
         .prepare(
-            "SELECT e.id, e.client_id, c.name, e.name, e.start_date, e.end_date, e.status
+            "SELECT e.id, e.client_id, c.short_name, e.name, e.start_date, e.end_date, e.status
          FROM engagements e JOIN clients c ON e.client_id = c.id
          WHERE e.is_active = 1 AND e.status IN ('scheduled', 'active', 'paused')
          ORDER BY e.start_date",
@@ -60,7 +60,7 @@ fn do_get_active_reminders(conn: &Connection) -> Result<Vec<Reminder>, String> {
     // Engagement start reminders (default 3 days before)
     let mut stmt = conn
         .prepare(
-            "SELECT e.id, e.name, c.name, e.start_date
+            "SELECT e.id, e.name, c.short_name, e.start_date
              FROM engagements e JOIN clients c ON e.client_id = c.id
              WHERE e.is_active = 1 AND e.status = 'scheduled' AND e.start_date IS NOT NULL
                AND e.start_date >= ? AND julianday(e.start_date) - julianday(?) <= 3",
@@ -95,7 +95,7 @@ fn do_get_active_reminders(conn: &Connection) -> Result<Vec<Reminder>, String> {
     // Engagement end reminders (default 1 day before)
     let mut stmt = conn
         .prepare(
-            "SELECT e.id, e.name, c.name, e.end_date
+            "SELECT e.id, e.name, c.short_name, e.end_date
              FROM engagements e JOIN clients c ON e.client_id = c.id
              WHERE e.is_active = 1 AND e.status = 'active' AND e.end_date IS NOT NULL
                AND e.end_date >= ? AND julianday(e.end_date) - julianday(?) <= 1",
@@ -130,7 +130,7 @@ fn do_get_active_reminders(conn: &Connection) -> Result<Vec<Reminder>, String> {
     // Overdue invoices (status-based; invoices schema has no due_date column)
     let mut stmt = conn
         .prepare(
-            "SELECT i.id, i.invoice_number, c.name, i.updated_at
+            "SELECT i.id, i.invoice_number, c.short_name, i.updated_at
              FROM invoices i JOIN clients c ON i.client_id = c.id
              WHERE i.is_active = 1 AND i.status IN ('sent', 'overdue')",
         )
@@ -239,7 +239,7 @@ pub fn dismiss_reminder(state: State<AppState>, reminder_key: String) -> Result<
 #[cfg(test)]
 mod tests {
     use super::*;
-    use securitysmith_core::db;
+    use ss_core::db;
 
     fn test_conn() -> Connection {
         let tmp = tempfile::tempdir().unwrap();
@@ -258,8 +258,8 @@ mod tests {
     ) -> u32 {
         let n = COUNTER.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         conn.execute(
-            "INSERT INTO clients (name, contact_email, notes, tags, is_active, created_at, updated_at)
-             VALUES (?1, NULL, NULL, '[]', 1, strftime('%s','now'), strftime('%s','now'))",
+            "INSERT INTO clients (short_name, registered_business_name, email, notes, tags, is_active, created_at, updated_at)
+             VALUES (?1, NULL, NULL, NULL, '[]', 1, strftime('%s','now'), strftime('%s','now'))",
             rusqlite::params![format!("Client-{n}")],
         )
         .unwrap();

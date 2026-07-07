@@ -35,7 +35,7 @@ pub fn do_get_notifications(conn: &Connection) -> crate::error::Result<Vec<Notif
     // (No due_date column on invoices schema; surfaced by status alone.)
     let mut stmt = conn
         .prepare(
-            "SELECT i.id, c.name, i.status
+            "SELECT i.id, c.short_name, i.status
              FROM invoices i JOIN clients c ON c.id = i.client_id
              WHERE i.is_active = 1 AND i.status IN ('sent', 'overdue')",
         )
@@ -69,7 +69,7 @@ pub fn do_get_notifications(conn: &Connection) -> crate::error::Result<Vec<Notif
     // Findings past deadline
     let mut stmt = conn
         .prepare(
-            "SELECT f.id, f.title, f.fix_deadline, f.severity, e.name, c.name
+            "SELECT f.id, f.title, f.fix_deadline, f.severity, e.name, c.short_name
              FROM findings f
              JOIN engagements e ON e.id = f.engagement_id
              JOIN clients c ON c.id = e.client_id
@@ -117,7 +117,7 @@ pub fn do_get_notifications(conn: &Connection) -> crate::error::Result<Vec<Notif
     // Awaiting retest
     let mut stmt = conn
         .prepare(
-            "SELECT f.id, f.title, e.name, c.name
+            "SELECT f.id, f.title, e.name, c.short_name
              FROM findings f
              JOIN engagements e ON e.id = f.engagement_id
              JOIN clients c ON c.id = e.client_id
@@ -191,8 +191,8 @@ mod tests {
         let n = COUNTER.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         let client_name = format!("Client-{n}");
         conn.execute(
-            "INSERT INTO clients (name, contact_email, notes, tags, is_active, created_at, updated_at)
-             VALUES (?1, NULL, NULL, '[]', 1, strftime('%s','now'), strftime('%s','now'))",
+            "INSERT INTO clients (short_name, registered_business_name, email, notes, tags, is_active, created_at, updated_at)
+             VALUES (?1, NULL, NULL, NULL, '[]', 1, strftime('%s','now'), strftime('%s','now'))",
             params![client_name],
         )
         .unwrap();

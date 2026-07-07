@@ -394,7 +394,7 @@ fn do_get_finding(conn: &Connection, id: u32) -> Result<Finding, String> {
     let finding: Option<Finding> = conn
         .query_row(
             "SELECT
-                f.id, f.engagement_id, e.name as engagement_name, c.name as client_name,
+                f.id, f.engagement_id, e.name as engagement_name, c.short_name as client_name,
                 f.title, f.severity, f.cvss_score, f.owasp_category, f.cwe_id,
                 f.overview, f.summary, f.affected_endpoints, f.evidence,
                 f.impact_items, f.remediation_items, f.steps_to_reproduce,
@@ -601,7 +601,7 @@ fn do_list_findings(
     );
     let mut items_sql = String::from(
         "SELECT
-            f.id, f.engagement_id, e.name as engagement_name, c.name as client_name,
+            f.id, f.engagement_id, e.name as engagement_name, c.short_name as client_name,
             f.title, f.severity, f.cvss_score, f.owasp_category, f.cwe_id,
             f.overview, f.summary, f.affected_endpoints, f.evidence,
             f.impact_items, f.remediation_items, f.steps_to_reproduce,
@@ -647,8 +647,8 @@ fn do_list_findings(
 
     if let Some(s) = search {
         let term = format!("%{}%", s.trim());
-        count_sql.push_str(" AND (f.title LIKE ? OR f.owasp_category LIKE ? OR f.tags LIKE ? OR c.name LIKE ? OR e.name LIKE ?)");
-        items_sql.push_str(" AND (f.title LIKE ? OR f.owasp_category LIKE ? OR f.tags LIKE ? OR c.name LIKE ? OR e.name LIKE ?)");
+        count_sql.push_str(" AND (f.title LIKE ? OR f.owasp_category LIKE ? OR f.tags LIKE ? OR c.short_name LIKE ? OR e.name LIKE ?)");
+        items_sql.push_str(" AND (f.title LIKE ? OR f.owasp_category LIKE ? OR f.tags LIKE ? OR c.short_name LIKE ? OR e.name LIKE ?)");
         params_vec.push(Box::new(term.clone()));
         params_vec.push(Box::new(term.clone()));
         params_vec.push(Box::new(term.clone()));
@@ -903,7 +903,7 @@ mod tests {
     #[test]
     fn test_create_and_get_finding() {
         let conn = test_conn();
-        let cid = do_create_client(&conn, "Acme", None, None, None, None).unwrap();
+        let cid = do_create_client(&conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None).unwrap();
         let eid = do_create_engagement(&conn, &make_engagement_input(cid, "Q1")).unwrap();
 
         let input = make_minimal_finding_input(eid, "SQL Injection");
@@ -929,7 +929,7 @@ mod tests {
     #[test]
     fn test_invalid_severity() {
         let conn = test_conn();
-        let cid = do_create_client(&conn, "Acme", None, None, None, None).unwrap();
+        let cid = do_create_client(&conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None).unwrap();
         let eid = do_create_engagement(&conn, &make_engagement_input(cid, "Q1")).unwrap();
 
         let mut input = make_minimal_finding_input(eid, "Bad");
@@ -942,7 +942,7 @@ mod tests {
     #[test]
     fn test_update_finding_status() {
         let conn = test_conn();
-        let cid = do_create_client(&conn, "Acme", None, None, None, None).unwrap();
+        let cid = do_create_client(&conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None).unwrap();
         let eid = do_create_engagement(&conn, &make_engagement_input(cid, "Q1")).unwrap();
 
         let input = make_minimal_finding_input(eid, "XSS");
@@ -956,7 +956,7 @@ mod tests {
     #[test]
     fn test_duplicate_finding() {
         let conn = test_conn();
-        let cid = do_create_client(&conn, "Acme", None, None, None, None).unwrap();
+        let cid = do_create_client(&conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None).unwrap();
         let eid = do_create_engagement(&conn, &make_engagement_input(cid, "Q1")).unwrap();
 
         let input = make_minimal_finding_input(eid, "CSRF");
@@ -971,7 +971,7 @@ mod tests {
     #[test]
     fn test_archive_hides_from_list() {
         let conn = test_conn();
-        let cid = do_create_client(&conn, "Acme", None, None, None, None).unwrap();
+        let cid = do_create_client(&conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None).unwrap();
         let eid = do_create_engagement(&conn, &make_engagement_input(cid, "Q1")).unwrap();
 
         let input = make_minimal_finding_input(eid, "LFI");
@@ -988,7 +988,7 @@ mod tests {
     #[test]
     fn test_search_and_filter() {
         let conn = test_conn();
-        let cid = do_create_client(&conn, "Acme", None, None, None, None).unwrap();
+        let cid = do_create_client(&conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None).unwrap();
         let eid = do_create_engagement(&conn, &make_engagement_input(cid, "Q1")).unwrap();
 
         let mut input1 = make_minimal_finding_input(eid, "SQL Injection");
@@ -1023,7 +1023,7 @@ mod tests {
     #[test]
     fn test_pagination() {
         let conn = test_conn();
-        let cid = do_create_client(&conn, "Acme", None, None, None, None).unwrap();
+        let cid = do_create_client(&conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None).unwrap();
         let eid = do_create_engagement(&conn, &make_engagement_input(cid, "Q1")).unwrap();
 
         for i in 0..5 {
@@ -1048,7 +1048,7 @@ mod tests {
     #[test]
     fn test_audit_snapshots() {
         let conn = test_conn();
-        let cid = do_create_client(&conn, "Acme", None, None, None, None).unwrap();
+        let cid = do_create_client(&conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None).unwrap();
         let eid = do_create_engagement(&conn, &make_engagement_input(cid, "Q1")).unwrap();
 
         let input = make_minimal_finding_input(eid, "Audit Test");
@@ -1080,7 +1080,7 @@ mod tests {
     #[test]
     fn test_get_finding_counts() {
         let conn = test_conn();
-        let cid = do_create_client(&conn, "Acme", None, None, None, None).unwrap();
+        let cid = do_create_client(&conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None).unwrap();
         let eid = do_create_engagement(&conn, &make_engagement_input(cid, "Q1")).unwrap();
 
         let mut input1 = make_minimal_finding_input(eid, "Critical XSS");

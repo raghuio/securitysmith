@@ -74,7 +74,7 @@ macro_rules! impl_sql_for_id {
             }
         }
         impl ToSql for $name {
-            fn to_sql(&self) -> rusqlite::Result<ToSqlOutput> {
+            fn to_sql(&self) -> rusqlite::Result<ToSqlOutput<'_>> {
                 self.0.to_sql()
             }
         }

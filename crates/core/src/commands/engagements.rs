@@ -204,7 +204,7 @@ fn are_gates_enabled(conn: &Connection) -> Result<bool, String> {
 fn get_engagement_row(conn: &Connection, id: u32) -> Result<Option<Engagement>, String> {
     conn.query_row(
         "SELECT
-            e.id, e.client_id, c.name as client_name, e.name,
+            e.id, e.client_id, c.short_name as client_name, e.name,
             e.target_area, e.assessment_kind, e.access_model, e.engagement_type,
             e.status, e.start_date, e.end_date, e.scope_summary,
             e.objectives, e.notes, e.tags, e.credentials_ready,
@@ -570,7 +570,7 @@ fn do_list_engagements(
 ) -> Result<Vec<Engagement>, String> {
     let mut sql = String::from(
         "SELECT
-            e.id, e.client_id, c.name as client_name, e.name,
+            e.id, e.client_id, c.short_name as client_name, e.name,
             e.target_area, e.assessment_kind, e.access_model, e.engagement_type,
             e.status, e.start_date, e.end_date, e.scope_summary,
             e.objectives, e.notes, e.tags, e.credentials_ready,
@@ -604,7 +604,7 @@ fn do_list_engagements(
         let p5 = base + 4;
         let p6 = base + 5;
         sql.push_str(&format!(
-            " AND (e.name LIKE ?{} OR e.target_area LIKE ?{} OR e.assessment_kind LIKE ?{} OR e.access_model LIKE ?{} OR e.engagement_type LIKE ?{} OR c.name LIKE ?{})",
+            " AND (e.name LIKE ?{} OR e.target_area LIKE ?{} OR e.assessment_kind LIKE ?{} OR e.access_model LIKE ?{} OR e.engagement_type LIKE ?{} OR c.short_name LIKE ?{})",
             p1, p2, p3, p4, p5, p6
         ));
         params_vec.push(Box::new(term.clone()));
@@ -763,7 +763,7 @@ mod tests {
     #[test]
     fn test_create_and_get_engagement() {
         let conn = test_conn();
-        let cid = do_create_client(&conn, "Acme", None, None, None, None).unwrap();
+        let cid = do_create_client(&conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None).unwrap();
         let input = make_input(cid, "Q1 Pentest", "planned");
         let id = do_create_engagement(&conn, &input).unwrap();
 
@@ -778,7 +778,7 @@ mod tests {
     #[test]
     fn test_duplicate_name_per_client_rejected() {
         let conn = test_conn();
-        let cid = do_create_client(&conn, "Acme", None, None, None, None).unwrap();
+        let cid = do_create_client(&conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None).unwrap();
         let input = make_input(cid, "Q1 Pentest", "planned");
         do_create_engagement(&conn, &input).unwrap();
 
@@ -790,8 +790,8 @@ mod tests {
     #[test]
     fn test_same_name_across_clients_allowed() {
         let conn = test_conn();
-        let cid1 = do_create_client(&conn, "Acme", None, None, None, None).unwrap();
-        let cid2 = do_create_client(&conn, "Wayne", None, None, None, None).unwrap();
+        let cid1 = do_create_client(&conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None).unwrap();
+        let cid2 = do_create_client(&conn, "Wayne", "Wayne Enterprises", None, None, None, None, None, None, None, None, None, None, None).unwrap();
         let input1 = make_input(cid1, "Q1 Pentest", "planned");
         let input2 = make_input(cid2, "Q1 Pentest", "planned");
         do_create_engagement(&conn, &input1).unwrap();
@@ -801,7 +801,7 @@ mod tests {
     #[test]
     fn test_archive_hides_from_default_list() {
         let conn = test_conn();
-        let cid = do_create_client(&conn, "Acme", None, None, None, None).unwrap();
+        let cid = do_create_client(&conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None).unwrap();
         let input = make_input(cid, "Q1 Pentest", "planned");
         let id = do_create_engagement(&conn, &input).unwrap();
 
@@ -816,7 +816,7 @@ mod tests {
     #[test]
     fn test_list_filters() {
         let conn = test_conn();
-        let cid = do_create_client(&conn, "Acme", None, None, None, None).unwrap();
+        let cid = do_create_client(&conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None).unwrap();
         let mut input1 = make_input(cid, "Web Pentest", "planned");
         input1.target_area = "Web".to_string();
         input1.assessment_kind = "Pentest".to_string();
@@ -843,7 +843,7 @@ mod tests {
     #[test]
     fn test_invalid_status_rejected() {
         let conn = test_conn();
-        let cid = do_create_client(&conn, "Acme", None, None, None, None).unwrap();
+        let cid = do_create_client(&conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None).unwrap();
         let mut input = make_input(cid, "Q1", "planned");
         input.status = "invalid".to_string();
         let result = do_create_engagement(&conn, &input);
@@ -854,7 +854,7 @@ mod tests {
     #[test]
     fn test_scheduled_status_accepted() {
         let conn = test_conn();
-        let cid = do_create_client(&conn, "Acme", None, None, None, None).unwrap();
+        let cid = do_create_client(&conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None).unwrap();
         let mut input = make_input(cid, "Q1", "scheduled");
         input.status = "scheduled".to_string();
         let id = do_create_engagement(&conn, &input).unwrap();
@@ -874,7 +874,7 @@ mod tests {
     #[test]
     fn test_date_validation() {
         let conn = test_conn();
-        let cid = do_create_client(&conn, "Acme", None, None, None, None).unwrap();
+        let cid = do_create_client(&conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None).unwrap();
         let mut input = make_input(cid, "Q1", "planned");
         input.start_date = Some("bad-date".to_string());
         let result = do_create_engagement(&conn, &input);
@@ -890,7 +890,7 @@ mod tests {
     #[test]
     fn test_audit_snapshots() {
         let conn = test_conn();
-        let cid = do_create_client(&conn, "Acme", None, None, None, None).unwrap();
+        let cid = do_create_client(&conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None).unwrap();
         let input = make_input(cid, "Q1", "planned");
         let id = do_create_engagement(&conn, &input).unwrap();
 
@@ -935,7 +935,7 @@ mod tests {
     #[test]
     fn test_transition_status_gates_blocked() {
         let conn = test_conn();
-        let cid = do_create_client(&conn, "Acme", None, None, None, None).unwrap();
+        let cid = do_create_client(&conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None).unwrap();
         let mut input = make_input(cid, "Q1", "planned");
         input.payment_required = Some(true);
         let id = do_create_engagement(&conn, &input).unwrap();
@@ -971,7 +971,7 @@ mod tests {
         )
         .unwrap();
 
-        let cid = do_create_client(&conn, "Acme", None, None, None, None).unwrap();
+        let cid = do_create_client(&conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None).unwrap();
         let input = make_input(cid, "Q1", "planned");
         let id = do_create_engagement(&conn, &input).unwrap();
 
@@ -984,7 +984,7 @@ mod tests {
     #[test]
     fn test_invalid_status_transition() {
         let conn = test_conn();
-        let cid = do_create_client(&conn, "Acme", None, None, None, None).unwrap();
+        let cid = do_create_client(&conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None).unwrap();
         let input = make_input(cid, "Q1", "active");
         let id = do_create_engagement(&conn, &input).unwrap();
 
@@ -996,7 +996,7 @@ mod tests {
     #[test]
     fn test_scheduled_to_active_transition() {
         let conn = test_conn();
-        let cid = do_create_client(&conn, "Acme", None, None, None, None).unwrap();
+        let cid = do_create_client(&conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None).unwrap();
         let input = make_input(cid, "Q1", "scheduled");
         let id = do_create_engagement(&conn, &input).unwrap();
 
@@ -1008,7 +1008,7 @@ mod tests {
     #[test]
     fn test_gate_toggle_audit() {
         let conn = test_conn();
-        let cid = do_create_client(&conn, "Acme", None, None, None, None).unwrap();
+        let cid = do_create_client(&conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None).unwrap();
         let input = make_input(cid, "Q1", "planned");
         let id = do_create_engagement(&conn, &input).unwrap();
 
@@ -1029,7 +1029,7 @@ mod tests {
     #[test]
     fn test_payment_required_default_false() {
         let conn = test_conn();
-        let cid = do_create_client(&conn, "Acme", None, None, None, None).unwrap();
+        let cid = do_create_client(&conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None).unwrap();
         let input = make_input(cid, "Q1", "planned");
         let id = do_create_engagement(&conn, &input).unwrap();
         let e = do_get_engagement(&conn, id).unwrap();
@@ -1039,7 +1039,7 @@ mod tests {
     #[test]
     fn test_payment_required_explicit_true() {
         let conn = test_conn();
-        let cid = do_create_client(&conn, "Acme", None, None, None, None).unwrap();
+        let cid = do_create_client(&conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None).unwrap();
         let mut input = make_input(cid, "Q1", "planned");
         input.payment_required = Some(true);
         let id = do_create_engagement(&conn, &input).unwrap();

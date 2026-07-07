@@ -70,9 +70,15 @@ fi
 # ─── 3. Verify Rust binary ────────────────────────────────────
 echo ""
 echo "⚙️  3. Rust binary"
-if [ -f "src-tauri/target/release/securitysmith" ]; then
-    SIZE=$(du -sh src-tauri/target/release/securitysmith | cut -f1)
-    check_ok "src-tauri/target/release/securitysmith   ($SIZE)"
+BINARY_PATH=""
+if [ -f "target/release/securitysmith" ]; then
+    BINARY_PATH="target/release/securitysmith"
+elif [ -f "src-tauri/target/release/securitysmith" ]; then
+    BINARY_PATH="src-tauri/target/release/securitysmith"
+fi
+if [ -n "$BINARY_PATH" ]; then
+    SIZE=$(du -sh "$BINARY_PATH" | cut -f1)
+    check_ok "$BINARY_PATH   ($SIZE)"
 else
     check_fail "Binary missing"
 fi
@@ -82,8 +88,28 @@ echo ""
 echo "📦 4. Installable bundles"
 BUNDLES=0
 
-if [ -f "src-tauri/target/release/bundle/deb/securitysmith_0.1.0_amd64.deb" ]; then
-    SIZE=$(du -sh src-tauri/target/release/bundle/deb/securitysmith_0.1.0_amd64.deb | cut -f1)
+# Prefer workspace-root target/ (Tauri v2 workspace builds)
+DEB_PATH=""
+APPIMAGE_PATH=""
+RPM_PATH=""
+if [ -f "target/release/bundle/deb/securitysmith_0.1.0_amd64.deb" ]; then
+    DEB_PATH="target/release/bundle/deb/securitysmith_0.1.0_amd64.deb"
+elif [ -f "src-tauri/target/release/bundle/deb/securitysmith_0.1.0_amd64.deb" ]; then
+    DEB_PATH="src-tauri/target/release/bundle/deb/securitysmith_0.1.0_amd64.deb"
+fi
+if [ -f "target/release/bundle/appimage/securitysmith_0.1.0_amd64.AppImage" ]; then
+    APPIMAGE_PATH="target/release/bundle/appimage/securitysmith_0.1.0_amd64.AppImage"
+elif [ -f "src-tauri/target/release/bundle/appimage/securitysmith_0.1.0_amd64.AppImage" ]; then
+    APPIMAGE_PATH="src-tauri/target/release/bundle/appimage/securitysmith_0.1.0_amd64.AppImage"
+fi
+if [ -f "target/release/bundle/rpm/securitysmith-0.1.0-1.x86_64.rpm" ]; then
+    RPM_PATH="target/release/bundle/rpm/securitysmith-0.1.0-1.x86_64.rpm"
+elif [ -f "src-tauri/target/release/bundle/rpm/securitysmith-0.1.0-1.x86_64.rpm" ]; then
+    RPM_PATH="src-tauri/target/release/bundle/rpm/securitysmith-0.1.0-1.x86_64.rpm"
+fi
+
+if [ -n "$DEB_PATH" ]; then
+    SIZE=$(du -sh "$DEB_PATH" | cut -f1)
     check_ok ".deb package ($SIZE)"
     BUNDLES=$((BUNDLES + 1))
 else
@@ -92,8 +118,8 @@ else
     fi
 fi
 
-if [ -f "src-tauri/target/release/bundle/appimage/securitysmith_0.1.0_amd64.AppImage" ]; then
-    SIZE=$(du -sh src-tauri/target/release/bundle/appimage/securitysmith_0.1.0_amd64.AppImage | cut -f1)
+if [ -n "$APPIMAGE_PATH" ]; then
+    SIZE=$(du -sh "$APPIMAGE_PATH" | cut -f1)
     check_ok ".AppImage ($SIZE)"
     BUNDLES=$((BUNDLES + 1))
 else
@@ -104,8 +130,8 @@ fi
 
 # .rpm is only expected when building all bundles
 if [ "$TARGET" = "all" ]; then
-    if [ -f "src-tauri/target/release/bundle/rpm/securitysmith-0.1.0-1.x86_64.rpm" ]; then
-        SIZE=$(du -sh src-tauri/target/release/bundle/rpm/securitysmith-0.1.0-1.x86_64.rpm | cut -f1)
+    if [ -n "$RPM_PATH" ]; then
+        SIZE=$(du -sh "$RPM_PATH" | cut -f1)
         check_ok ".rpm package ($SIZE)"
         BUNDLES=$((BUNDLES + 1))
     else

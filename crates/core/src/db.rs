@@ -24,6 +24,13 @@ const CHECKLISTS_SQL: &str = include_str!("../migrations/027_checklists.sql");
 const SEARCH_INDEX_SQL: &str = include_str!("../migrations/028_search_index.sql");
 const NOTIFICATIONS_SQL: &str = include_str!("../migrations/029_notifications.sql");
 const COMPLIANCE_SQL: &str = include_str!("../migrations/030_compliance.sql");
+const PROJECTS_SQL: &str = include_str!("../migrations/031_projects.sql");
+const PROJECT_CONTACTS_SQL: &str = include_str!("../migrations/032_project_contacts.sql");
+const ENGAGEMENT_TYPE_LABELS_SQL: &str = include_str!("../migrations/033_engagement_type_labels.sql");
+const CLIENT_HISTORY_SQL: &str = include_str!("../migrations/034_client_history.sql");
+const ALTER_CLIENTS_SQL: &str = include_str!("../migrations/035_alter_clients.sql");
+const ALTER_ENGAGEMENTS_SQL: &str = include_str!("../migrations/036_alter_engagements.sql");
+const UNCATEGORIZED_PROJECTS_SQL: &str = include_str!("../migrations/037_uncategorized_projects.sql");
 
 /// Open or create the encrypted SQLite vault at the given directory.
 /// The database file is named `vault.db` and is encrypted with SQLCipher
@@ -77,10 +84,11 @@ pub fn rekey_vault(
     Ok(())
 }
 
-/// Initialise schema: run migrations, enable WAL mode, tune pragmas.
+/// Initialise schema: run migrations, fix any broken schemas, enable WAL mode, tune pragmas.
 pub fn init_db(conn: &Connection) -> Result<(), String> {
     enable_wal(conn)?;
     run_migrations(conn)?;
+    fix_broken_clients_schema(conn)?;
     Ok(())
 }
 
@@ -140,6 +148,13 @@ fn run_migrations(conn: &Connection) -> Result<(), String> {
     apply_migration(conn, 28, "search_index", SEARCH_INDEX_SQL)?;
     apply_migration(conn, 29, "notifications", NOTIFICATIONS_SQL)?;
     apply_migration(conn, 30, "compliance", COMPLIANCE_SQL)?;
+    apply_migration(conn, 31, "projects", PROJECTS_SQL)?;
+    apply_migration(conn, 32, "project_contacts", PROJECT_CONTACTS_SQL)?;
+    apply_migration(conn, 33, "engagement_type_labels", ENGAGEMENT_TYPE_LABELS_SQL)?;
+    apply_migration(conn, 34, "client_history", CLIENT_HISTORY_SQL)?;
+    apply_migration(conn, 35, "alter_clients", ALTER_CLIENTS_SQL)?;
+    apply_migration(conn, 36, "alter_engagements", ALTER_ENGAGEMENTS_SQL)?;
+    apply_migration(conn, 37, "uncategorized_projects", UNCATEGORIZED_PROJECTS_SQL)?;
 
     seed_builtin_templates(conn)?;
     seed_default_news_feeds(conn)?;
@@ -149,6 +164,8 @@ fn run_migrations(conn: &Connection) -> Result<(), String> {
 }
 
 /// Apply a single migration if it has not already been recorded.
+/// Wrapped in a transaction so partial failures roll back and the
+/// migration is not incorrectly marked as applied.
 fn apply_migration(conn: &Connection, version: i64, name: &str, sql: &str) -> Result<(), String> {
     let already_applied: bool = conn
         .query_row(
@@ -164,19 +181,129 @@ fn apply_migration(conn: &Connection, version: i64, name: &str, sql: &str) -> Re
         return Ok(());
     }
 
-    if let Err(ref e) = conn.execute_batch(sql) {
+    // Begin explicit transaction so a failure in any statement rolls back.
+    conn.execute("BEGIN IMMEDIATE", [])
+        .map_err(|e| format!("Failed to begin migration transaction: {e}"))?;
+
+    let result = conn.execute_batch(sql);
+
+    if let Err(ref e) = result {
         let msg = e.to_string().to_lowercase();
         if !msg.contains("duplicate column name") {
+            let _ = conn.execute("ROLLBACK", []);
             return Err(format!("Migration {version} failed: {e}"));
         }
-        // Column already exists — treat as idempotently applied.
+        // duplicate column name is idempotent — still commit
     }
 
     conn.execute(
         "INSERT INTO _migrations (version, name, applied_at) VALUES (?1, ?2, strftime('%s', 'now'))",
         params![version, name],
     )
-    .map_err(|e| format!("Failed to record migration {version}: {e}"))?;
+    .map_err(|e| {
+        let _ = conn.execute("ROLLBACK", []);
+        format!("Failed to record migration {version}: {e}")
+    })?;
+
+    conn.execute("COMMIT", [])
+        .map_err(|e| format!("Failed to commit migration {version}: {e}"))?;
+
+    Ok(())
+}
+
+/// Fix clients schema for databases where migration 035 was partially applied.
+/// The old apply_migration error handler incorrectly treated "duplicate column name"
+/// as idempotent for the entire batch, causing 035 to be marked as applied without
+/// dropping the old `name` / `contact_email` / `tech_stack` columns.
+/// This function checks if `name` still exists and safely recreates the table.
+fn fix_broken_clients_schema(conn: &Connection) -> Result<(), String> {
+    // Check if the old `name` column still exists
+    let name_exists: bool = conn
+        .query_row(
+            "SELECT 1 FROM pragma_table_info('clients') WHERE name = 'name'",
+            [],
+            |_| Ok(true),
+        )
+        .optional()
+        .map_err(|e| format!("Schema check failed: {e}"))?
+        .unwrap_or(false);
+
+    if !name_exists {
+        return Ok(()); // Schema is already correct
+    }
+
+    conn.execute("PRAGMA foreign_keys = OFF", [])
+        .map_err(|e| format!("Failed to disable FK checks: {e}"))?;
+
+    conn.execute("BEGIN IMMEDIATE", [])
+        .map_err(|e| format!("Failed to begin fix transaction: {e}"))?;
+
+    let result = conn.execute_batch(
+        "CREATE TABLE clients_new (
+            id                       INTEGER PRIMARY KEY AUTOINCREMENT,
+            short_name               TEXT NOT NULL UNIQUE,
+            registered_business_name TEXT,
+            country                  TEXT,
+            address                  TEXT,
+            email                    TEXT,
+            contact_number           TEXT,
+            business_tier            TEXT
+                CHECK (business_tier IN ('enterprise', 'mid_market', 'small')),
+            priority                 TEXT
+                CHECK (priority IN ('high', 'medium', 'low')),
+            status                   TEXT DEFAULT 'active'
+                CHECK (status IN ('active', 'inactive', 'prospect')),
+            tax_info                 TEXT DEFAULT '{}',
+            logo_attachment_id       INTEGER,
+            notes                    TEXT,
+            tags                     TEXT NOT NULL DEFAULT '[]',
+            is_active                INTEGER NOT NULL DEFAULT 1,
+            created_at               INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+            updated_at               INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+        );
+
+        INSERT INTO clients_new (
+            id, short_name, registered_business_name, country, address, email,
+            contact_number, business_tier, priority, status, tax_info, logo_attachment_id,
+            notes, tags, is_active, created_at, updated_at
+        )
+        SELECT
+            id,
+            COALESCE(short_name, name, 'Unknown')              AS short_name,
+            COALESCE(registered_business_name, name, '')     AS registered_business_name,
+            COALESCE(country, '')                              AS country,
+            COALESCE(address, '')                             AS address,
+            COALESCE(email, contact_email, '')                AS email,
+            COALESCE(contact_number, '')                       AS contact_number,
+            business_tier                                       AS business_tier,
+            COALESCE(priority, 'medium')                       AS priority,
+            COALESCE(status, 'active')                         AS status,
+            COALESCE(tax_info, '{}')                           AS tax_info,
+            logo_attachment_id,
+            notes,
+            COALESCE(tags, '[]')                               AS tags,
+            is_active,
+            created_at,
+            updated_at
+        FROM clients;
+
+        DROP TABLE clients;
+        ALTER TABLE clients_new RENAME TO clients;
+
+        CREATE INDEX IF NOT EXISTS idx_clients_short_name ON clients(short_name);
+        CREATE INDEX IF NOT EXISTS idx_clients_status ON clients(status);
+        CREATE INDEX IF NOT EXISTS idx_clients_active ON clients(is_active);
+
+        PRAGMA foreign_keys = ON;"
+    );
+
+    if let Err(e) = result {
+        let _ = conn.execute("ROLLBACK", []);
+        return Err(format!("Clients schema fix failed: {e}"));
+    }
+
+    conn.execute("COMMIT", [])
+        .map_err(|e| format!("Failed to commit schema fix: {e}"))?;
 
     Ok(())
 }

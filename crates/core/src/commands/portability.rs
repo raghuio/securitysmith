@@ -207,7 +207,7 @@ pub fn get_export_tree(state: State<AppState>) -> Result<ExportTree, String> {
 
     let mut clients: Vec<ExportTreeClient> = Vec::new();
     let mut stmt = conn
-        .prepare("SELECT id, name FROM clients WHERE is_active = 1 ORDER BY name")
+        .prepare("SELECT id, short_name FROM clients WHERE is_active = 1 ORDER BY short_name")
         .map_err(AppError::from)?;
     let client_rows = stmt
         .query_map([], |row| {
@@ -675,10 +675,10 @@ pub fn preview_import(state: State<AppState>, file_path: String) -> Result<Impor
         clients_file.read_to_string(&mut clients_raw).ok();
         if let Ok(clients) = serde_json::from_str::<Vec<serde_json::Value>>(&clients_raw) {
             for client in clients {
-                if let Some(name) = client.get("name").and_then(|n| n.as_str()) {
+                if let Some(name) = client.get("short_name").and_then(|n| n.as_str()).or_else(|| client.get("name").and_then(|n| n.as_str())) {
                     let exists: i64 = conn
                         .query_row(
-                            "SELECT COUNT(*) FROM clients WHERE name = ? AND is_active = 1",
+                            "SELECT COUNT(*) FROM clients WHERE short_name = ? AND is_active = 1",
                             [name],
                             |row| row.get(0),
                         )
@@ -748,29 +748,31 @@ pub fn execute_import(
         clients_file.read_to_string(&mut clients_raw).ok();
         if let Ok(clients) = serde_json::from_str::<Vec<serde_json::Value>>(&clients_raw) {
             for client in clients {
-                let name = client.get("name").and_then(|n| n.as_str()).unwrap_or("");
-                let key = format!("client::{name}");
+                let short_name = client.get("short_name").and_then(|n| n.as_str()).or_else(|| client.get("name").and_then(|n| n.as_str())).unwrap_or("");
+                let registered = client.get("registered_business_name").and_then(|n| n.as_str()).unwrap_or(short_name);
+                let email = client.get("email").and_then(|v| v.as_str()).or_else(|| client.get("contact_email").and_then(|v| v.as_str())).unwrap_or("");
+                let key = format!("client::{short_name}");
                 if skip_set.contains(&key) {
                     *skipped.entry("clients".to_string()).or_insert(0) += 1;
                     continue;
                 }
-                let final_name = rename_map.get(&key).map(|s| s.as_str()).unwrap_or(name);
+                let final_name = rename_map.get(&key).map(|s| s.as_str()).unwrap_or(short_name);
 
                 let old_id = client.get("id").and_then(|v| v.as_i64()).unwrap_or(0);
 
                 // Overwrite: delete existing
                 if overwrite_set.contains(&key) {
-                    let _ = conn.execute("DELETE FROM clients WHERE name = ?", [final_name]);
+                    let _ = conn.execute("DELETE FROM clients WHERE short_name = ?", [final_name]);
                 }
 
                 conn.execute(
-                    "INSERT INTO clients (name, contact_email, notes, tags, tech_stack, is_active, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, 1, strftime('%s', 'now'), strftime('%s', 'now'))",
+                    "INSERT INTO clients (short_name, registered_business_name, email, notes, tags, is_active, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, 1, strftime('%s', 'now'), strftime('%s', 'now'))",
                     rusqlite::params![
                         final_name,
-                        client.get("contact_email").and_then(|v| v.as_str()).unwrap_or(""),
+                        registered,
+                        email,
                         client.get("notes").and_then(|v| v.as_str()).unwrap_or(""),
                         client.get("tags").and_then(|v| v.as_str()).unwrap_or("[]"),
-                        client.get("tech_stack").and_then(|v| v.as_str()).unwrap_or("[]"),
                     ],
                 ).map_err(AppError::from)?;
                 let new_id = conn.last_insert_rowid();

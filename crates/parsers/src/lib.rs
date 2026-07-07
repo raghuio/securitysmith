@@ -1,3 +1,4 @@
+#![allow(unused_mut, clippy::must_use_candidate, clippy::double_must_use, clippy::too_many_arguments)]
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

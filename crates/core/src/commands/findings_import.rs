@@ -1,4 +1,4 @@
-use securitysmith_parsers::{
+use ss_parsers::{
     CsvColumnMapping, FindingParser, ImportPreview, ImportResult, ParsedFinding, burp::BurpParser,
     csv_import::CsvParser, nessus::NessusParser, nmap::NmapParser, nuclei::NucleiParser,
     zap::ZapJsonParser,

@@ -1,4 +1,4 @@
-use securitysmith_core::state::AppState;
+use ss_core::state::AppState;
 use rusqlite::{Connection, OptionalExtension, params};
 use serde::{Deserialize, Serialize};
 use tauri::State;
@@ -546,7 +546,7 @@ pub fn save_finding_as_template(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use securitysmith_core::db;
+    use ss_core::db;
 
     fn test_conn() -> Connection {
         let tmp = tempfile::tempdir().unwrap();

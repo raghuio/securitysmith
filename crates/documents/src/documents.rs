@@ -1,4 +1,4 @@
-use securitysmith_core::state::AppState;
+use ss_core::state::AppState;
 use rusqlite::OptionalExtension;
 use rusqlite::{Connection, params};
 use serde::Serialize;
@@ -44,7 +44,7 @@ fn do_list_docs(
     client_id: Option<u32>,
     engagement_id: Option<u32>,
 ) -> Result<Vec<Document>, String> {
-    let mut sql = "SELECT d.id, d.client_id, c.name, d.engagement_id, e.name, d.name, d.document_type, d.content, d.status, d.template_id, d.is_active, d.created_at, d.updated_at
+    let mut sql = "SELECT d.id, d.client_id, c.short_name, d.engagement_id, e.name, d.name, d.document_type, d.content, d.status, d.template_id, d.is_active, d.created_at, d.updated_at
      FROM documents d JOIN clients c ON d.client_id = c.id LEFT JOIN engagements e ON d.engagement_id = e.id
      WHERE d.is_active = 1".to_string();
     let mut ps: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
@@ -72,7 +72,7 @@ fn do_list_docs(
 fn do_get_doc(conn: &Connection, id: u32) -> Result<Document, String> {
     let mut stmt = conn
         .prepare(
-            "SELECT d.id, d.client_id, c.name, d.engagement_id, e.name, d.name, d.document_type, d.content, d.status, d.template_id, d.is_active, d.created_at, d.updated_at
+            "SELECT d.id, d.client_id, c.short_name, d.engagement_id, e.name, d.name, d.document_type, d.content, d.status, d.template_id, d.is_active, d.created_at, d.updated_at
              FROM documents d JOIN clients c ON d.client_id = c.id LEFT JOIN engagements e ON d.engagement_id = e.id
              WHERE d.id = ? AND d.is_active = 1"
         )
@@ -326,7 +326,7 @@ pub fn render_document_placeholders(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use securitysmith_core::db;
+    use ss_core::db;
 
     fn test_conn() -> Connection {
         let tmp = tempfile::tempdir().unwrap();
@@ -340,8 +340,8 @@ mod tests {
     fn make_client(conn: &Connection) -> u32 {
         let n = COUNTER.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         conn.execute(
-            "INSERT INTO clients (name, contact_email, notes, tags, is_active, created_at, updated_at)
-             VALUES (?1, NULL, NULL, '[]', 1, strftime('%s','now'), strftime('%s','now'))",
+            "INSERT INTO clients (short_name, registered_business_name, email, notes, tags, is_active, created_at, updated_at)
+             VALUES (?1, NULL, NULL, NULL, '[]', 1, strftime('%s','now'), strftime('%s','now'))",
             params![format!("Client-{n}")],
         )
         .unwrap();

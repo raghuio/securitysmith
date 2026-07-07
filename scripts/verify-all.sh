@@ -160,16 +160,21 @@ fi
 # ─── 10. Build Artifacts ──────────────────────────────────────
 echo ""
 echo "📦 10. Build artifact verification"
-if [ -f "src-tauri/target/release/bundle/deb/securitysmith_0.1.0_amd64.deb" ]; then
-    check_ok "deb package exists"
+# Prefer workspace-root target/ (Tauri v2 workspace builds)
+if [ -f "target/release/bundle/deb/securitysmith_0.1.0_amd64.deb" ]; then
+    check_ok "deb package exists (target/)"
+elif [ -f "src-tauri/target/release/bundle/deb/securitysmith_0.1.0_amd64.deb" ]; then
+    check_ok "deb package exists (src-tauri/target/)"
 else
-    check_info "deb package not built (run: npm run tauri build)"
+    check_info "deb package not built (run: npx tauri build)"
 fi
 
-if [ -f "src-tauri/target/release/bundle/appimage/securitysmith_0.1.0_amd64.AppImage" ]; then
-    check_ok "AppImage exists"
+if [ -f "target/release/bundle/appimage/securitysmith_0.1.0_amd64.AppImage" ]; then
+    check_ok "AppImage exists (target/)"
+elif [ -f "src-tauri/target/release/bundle/appimage/securitysmith_0.1.0_amd64.AppImage" ]; then
+    check_ok "AppImage exists (src-tauri/target/)"
 else
-    check_info "AppImage not built (run: npm run tauri build)"
+    check_info "AppImage not built (run: npx tauri build)"
 fi
 
 # ─── Summary ──────────────────────────────────────────────────

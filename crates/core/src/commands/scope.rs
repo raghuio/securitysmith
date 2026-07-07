@@ -315,8 +315,8 @@ mod tests {
     fn make_engagement(conn: &Connection) -> u32 {
         let n = COUNTER.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         conn.execute(
-            "INSERT INTO clients (name, contact_email, notes, tags, is_active, created_at, updated_at)
-             VALUES (?1, NULL, NULL, '[]', 1, strftime('%s','now'), strftime('%s','now'))",
+            "INSERT INTO clients (short_name, registered_business_name, email, notes, tags, is_active, created_at, updated_at)
+             VALUES (?1, NULL, NULL, NULL, '[]', 1, strftime('%s','now'), strftime('%s','now'))",
             rusqlite::params![format!("Client-{n}")],
         )
         .unwrap();

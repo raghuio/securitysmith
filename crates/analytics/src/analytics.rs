@@ -1,4 +1,4 @@
-use securitysmith_core::state::AppState;
+use ss_core::state::AppState;
 use rusqlite::{Connection, params};
 use serde::Serialize;
 use tauri::State;
@@ -191,7 +191,7 @@ pub fn do_get_remediation_rate(conn: &Connection) -> Result<RemediationRate, Str
 pub fn do_get_revenue_by_client(conn: &Connection) -> Result<Vec<DataPoint>, String> {
     let mut stmt = conn
         .prepare(
-            "SELECT c.name, COALESCE(SUM(ii.amount), 0)
+            "SELECT c.short_name, COALESCE(SUM(ii.amount), 0)
              FROM clients c
              LEFT JOIN invoices i ON i.client_id = c.id AND i.is_active = 1 AND i.status = 'paid'
              LEFT JOIN invoice_items ii ON ii.invoice_id = i.id
@@ -217,7 +217,7 @@ pub fn do_get_revenue_by_client(conn: &Connection) -> Result<Vec<DataPoint>, Str
 pub fn do_get_engagement_timeline(conn: &Connection) -> Result<Vec<TimelineEntry>, String> {
     let mut stmt = conn
         .prepare(
-            "SELECT e.id, e.name, c.name, e.start_date, e.end_date, e.status
+            "SELECT e.id, e.name, c.short_name, e.start_date, e.end_date, e.status
              FROM engagements e JOIN clients c ON c.id = e.client_id
              WHERE e.is_active = 1 AND e.status IN ('active', 'scheduled', 'planned')
              ORDER BY e.start_date",
@@ -380,7 +380,7 @@ pub fn get_budget_vs_actual(state: State<AppState>) -> Result<Vec<BudgetComparis
 #[cfg(test)]
 mod tests {
     use super::*;
-    use securitysmith_core::db;
+    use ss_core::db;
 
     fn test_conn() -> Connection {
         let tmp = tempfile::tempdir().unwrap();
@@ -410,8 +410,8 @@ mod tests {
         // Use a unique client name per call to avoid UNIQUE collisions
         let client_name = format!("Client-{}", uuid_like());
         conn.execute(
-            "INSERT INTO clients (name, contact_email, notes, tags, is_active, created_at, updated_at)
-             VALUES (?1, NULL, NULL, '[]', 1, strftime('%s','now'), strftime('%s','now'))",
+            "INSERT INTO clients (short_name, registered_business_name, email, notes, tags, is_active, created_at, updated_at)
+             VALUES (?1, NULL, NULL, NULL, '[]', 1, strftime('%s','now'), strftime('%s','now'))",
             params![client_name],
         )
         .unwrap();

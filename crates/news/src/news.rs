@@ -1,4 +1,4 @@
-use securitysmith_core::state::AppState;
+use ss_core::state::AppState;
 use rusqlite::{Connection, OptionalExtension, params};
 use serde::Serialize;
 use std::collections::HashSet;
@@ -503,7 +503,7 @@ pub async fn refresh_feeds(state: State<'_, AppState>) -> Result<RefreshResult, 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use securitysmith_core::db;
+    use ss_core::db;
 
     fn test_conn() -> Connection {
         let tmp = tempfile::tempdir().unwrap();

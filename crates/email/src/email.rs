@@ -1,4 +1,4 @@
-use securitysmith_core::state::AppState;
+use ss_core::state::AppState;
 use lettre::AsyncTransport;
 use lettre::message::header::ContentType;
 use lettre::message::{Attachment, MultiPart, SinglePart};
@@ -255,7 +255,7 @@ pub fn get_follow_up_reminders(state: State<AppState>) -> Result<Vec<FollowUpRem
 
     let mut stmt = conn
         .prepare(
-            "SELECT e.id, e.name, c.name, e.updated_at
+            "SELECT e.id, e.name, c.short_name, e.updated_at
              FROM engagements e JOIN clients c ON e.client_id = c.id
              WHERE e.is_active = 1 AND e.status = 'completed'",
         )

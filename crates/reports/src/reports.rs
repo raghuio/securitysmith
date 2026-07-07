@@ -1,5 +1,5 @@
-use securitysmith_report_engine::{ReportData, generate_pdf};
-use securitysmith_core::state::AppState;
+use ss_report_engine::{ReportData, generate_pdf};
+use ss_core::state::AppState;
 use rusqlite::OptionalExtension;
 use rusqlite::{Connection, params};
 use serde::Serialize;
@@ -45,11 +45,11 @@ fn row_to_report(row: &rusqlite::Row) -> Result<Report, rusqlite::Error> {
 
 fn do_list_reports(conn: &Connection, engagement_id: Option<u32>) -> Result<Vec<Report>, String> {
     let sql = if engagement_id.is_some() {
-        "SELECT r.id, r.engagement_id, e.name, c.name, r.name, r.included_finding_ids, r.executive_summary, r.appendix, r.status, r.generated_at, r.file_path, r.is_active, r.created_at, r.updated_at
+        "SELECT r.id, r.engagement_id, e.name, c.short_name, r.name, r.included_finding_ids, r.executive_summary, r.appendix, r.status, r.generated_at, r.file_path, r.is_active, r.created_at, r.updated_at
          FROM reports r JOIN engagements e ON r.engagement_id = e.id JOIN clients c ON e.client_id = c.id
          WHERE r.is_active = 1 AND r.engagement_id = ? ORDER BY r.updated_at DESC"
     } else {
-        "SELECT r.id, r.engagement_id, e.name, c.name, r.name, r.included_finding_ids, r.executive_summary, r.appendix, r.status, r.generated_at, r.file_path, r.is_active, r.created_at, r.updated_at
+        "SELECT r.id, r.engagement_id, e.name, c.short_name, r.name, r.included_finding_ids, r.executive_summary, r.appendix, r.status, r.generated_at, r.file_path, r.is_active, r.created_at, r.updated_at
          FROM reports r JOIN engagements e ON r.engagement_id = e.id JOIN clients c ON e.client_id = c.id
          WHERE r.is_active = 1 ORDER BY r.updated_at DESC"
     };
@@ -73,7 +73,7 @@ fn do_list_reports(conn: &Connection, engagement_id: Option<u32>) -> Result<Vec<
 fn do_get_report(conn: &Connection, id: u32) -> Result<Report, String> {
     let mut stmt = conn
         .prepare(
-            "SELECT r.id, r.engagement_id, e.name, c.name, r.name, r.included_finding_ids, r.executive_summary, r.appendix, r.status, r.generated_at, r.file_path, r.is_active, r.created_at, r.updated_at
+            "SELECT r.id, r.engagement_id, e.name, c.short_name, r.name, r.included_finding_ids, r.executive_summary, r.appendix, r.status, r.generated_at, r.file_path, r.is_active, r.created_at, r.updated_at
              FROM reports r JOIN engagements e ON r.engagement_id = e.id JOIN clients c ON e.client_id = c.id
              WHERE r.id = ? AND r.is_active = 1"
         )
@@ -330,14 +330,14 @@ pub fn generate_report_pdf(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use securitysmith_core::db;
+    use ss_core::db;
 
     fn conn() -> Connection {
         let tmp = tempfile::tempdir().unwrap();
         let key = [11u8; 32];
         let c = db::open_vault(tmp.path(), &key).unwrap();
         db::init_db(&c).unwrap();
-        c.execute("INSERT INTO clients (name) VALUES ('Acme')", [])
+        c.execute("INSERT INTO clients (short_name, registered_business_name, email, notes, tags, is_active, created_at, updated_at) VALUES ('Acme', NULL, NULL, NULL, '[]', 1, strftime('%s','now'), strftime('%s','now'))", [])
             .unwrap();
         c.execute("INSERT INTO engagements (client_id, name, target_area, assessment_kind, access_model, engagement_type, status, start_date) VALUES (1, 'Pentest', 'Web', 'pentest', 'remote', 'one-time', 'active', '2026-01-01')", []).unwrap();
         c

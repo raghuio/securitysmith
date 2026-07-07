@@ -1,4 +1,4 @@
-use securitysmith_core::state::AppState;
+use ss_core::state::AppState;
 use rusqlite::{Connection, params};
 use serde::{Deserialize, Serialize};
 use tauri::State;
@@ -79,7 +79,7 @@ fn recalc_total(
 
 fn do_get_invoice(conn: &Connection, id: u32) -> Result<Invoice, String> {
     let mut stmt = conn.prepare(
-        "SELECT i.id, i.client_id, c.name, i.engagement_id, e.name, i.document_type, i.invoice_number, i.status, i.subtotal_cents, i.tax_rate_bps, i.discount_cents, i.discount_pct_bps, i.total_cents, i.currency, i.notes, i.is_active, i.created_at, i.updated_at
+        "SELECT i.id, i.client_id, c.short_name, i.engagement_id, e.name, i.document_type, i.invoice_number, i.status, i.subtotal_cents, i.tax_rate_bps, i.discount_cents, i.discount_pct_bps, i.total_cents, i.currency, i.notes, i.is_active, i.created_at, i.updated_at
          FROM invoices i JOIN clients c ON i.client_id = c.id LEFT JOIN engagements e ON i.engagement_id = e.id
          WHERE i.id = ? AND i.is_active = 1"
     ).map_err(|e| format!("Prepare failed: {e}"))?;
@@ -231,7 +231,7 @@ fn do_archive_invoice(conn: &Connection, id: u32) -> Result<(), String> {
 }
 
 fn do_list_invoices(conn: &Connection, client_id: Option<u32>) -> Result<Vec<Invoice>, String> {
-    let mut sql = "SELECT i.id, i.client_id, c.name, i.engagement_id, e.name, i.document_type, i.invoice_number, i.status, i.subtotal_cents, i.tax_rate_bps, i.discount_cents, i.discount_pct_bps, i.total_cents, i.currency, i.notes, i.is_active, i.created_at, i.updated_at
+    let mut sql = "SELECT i.id, i.client_id, c.short_name, i.engagement_id, e.name, i.document_type, i.invoice_number, i.status, i.subtotal_cents, i.tax_rate_bps, i.discount_cents, i.discount_pct_bps, i.total_cents, i.currency, i.notes, i.is_active, i.created_at, i.updated_at
      FROM invoices i JOIN clients c ON i.client_id = c.id LEFT JOIN engagements e ON i.engagement_id = e.id
      WHERE i.is_active = 1".to_string();
     let mut ps: Vec<Box<dyn rusqlite::ToSql>> = Vec::new();
@@ -589,7 +589,7 @@ pub fn generate_invoice_pdf(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use securitysmith_core::db;
+    use ss_core::db;
 
     fn test_conn() -> Connection {
         let tmp = tempfile::tempdir().unwrap();
@@ -603,8 +603,8 @@ mod tests {
     fn make_client(conn: &Connection) -> u32 {
         let n = COUNTER.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         conn.execute(
-            "INSERT INTO clients (name, contact_email, notes, tags, is_active, created_at, updated_at)
-             VALUES (?1, NULL, NULL, '[]', 1, strftime('%s','now'), strftime('%s','now'))",
+            "INSERT INTO clients (short_name, registered_business_name, email, notes, tags, is_active, created_at, updated_at)
+             VALUES (?1, NULL, NULL, NULL, '[]', 1, strftime('%s','now'), strftime('%s','now'))",
             params![format!("Client-{n}")],
         )
         .unwrap();

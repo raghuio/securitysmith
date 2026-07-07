@@ -1,4 +1,4 @@
-use securitysmith_core::state::AppState;
+use ss_core::state::AppState;
 use rusqlite::{Connection, params};
 use serde::{Deserialize, Serialize};
 use tauri::State;
@@ -362,7 +362,7 @@ pub fn get_checklist_coverage(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use securitysmith_core::db;
+    use ss_core::db;
 
     fn test_conn() -> Connection {
         let tmp = tempfile::tempdir().unwrap();
@@ -377,8 +377,8 @@ mod tests {
         let n = COUNTER.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         let client_name = format!("Client-{n}");
         conn.execute(
-            "INSERT INTO clients (name, contact_email, notes, tags, is_active, created_at, updated_at)
-             VALUES (?1, NULL, NULL, '[]', 1, strftime('%s','now'), strftime('%s','now'))",
+            "INSERT INTO clients (short_name, registered_business_name, email, notes, tags, is_active, created_at, updated_at)
+             VALUES (?1, NULL, NULL, NULL, '[]', 1, strftime('%s','now'), strftime('%s','now'))",
             params![client_name],
         )
         .unwrap();

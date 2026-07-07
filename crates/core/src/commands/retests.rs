@@ -35,7 +35,7 @@ pub fn do_create_retest_engagement(
     // Verify original exists
     let original: Option<(u32, String, String, String, String)> = conn
         .query_row(
-            "SELECT e.client_id, e.name, c.name, e.target_area, e.assessment_kind
+            "SELECT e.client_id, e.name, c.short_name, e.target_area, e.assessment_kind
              FROM engagements e JOIN clients c ON c.id = e.client_id
              WHERE e.id = ? AND e.is_active = 1",
             params![original_engagement_id],
@@ -149,7 +149,7 @@ pub fn do_list_retest_engagements(
 ) -> crate::error::Result<Vec<RetestEngagement>> {
     let mut stmt = conn
         .prepare(
-            "SELECT e.id, e.original_engagement_id, oe.name, e.name, c.name, e.status, e.created_at
+            "SELECT e.id, e.original_engagement_id, oe.name, e.name, c.short_name, e.status, e.created_at
              FROM engagements e
              JOIN engagements oe ON oe.id = e.original_engagement_id
              JOIN clients c ON c.id = e.client_id

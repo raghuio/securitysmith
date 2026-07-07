@@ -1,4 +1,4 @@
-use securitysmith_core::state::AppState;
+use ss_core::state::AppState;
 use rusqlite::{Connection, params};
 use serde::{Deserialize, Serialize};
 use tauri::State;
@@ -335,7 +335,7 @@ pub fn remove_compliance_mapping(state: State<AppState>, mapping_id: u32) -> Res
 #[cfg(test)]
 mod tests {
     use super::*;
-    use securitysmith_core::db;
+    use ss_core::db;
 
     fn test_conn() -> Connection {
         let tmp = tempfile::tempdir().unwrap();

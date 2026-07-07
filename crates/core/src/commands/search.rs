@@ -20,7 +20,7 @@ fn rebuild_search_index(conn: &Connection) -> Result<(), String> {
 
     // Index clients
     let mut stmt = conn
-        .prepare("SELECT id, name, contact_email, notes, tags FROM clients WHERE is_active = 1")
+        .prepare("SELECT id, short_name, email, notes, tags FROM clients WHERE is_active = 1")
         .map_err(AppError::from)?;
     let rows = stmt
         .query_map([], |row| {
@@ -34,20 +34,20 @@ fn rebuild_search_index(conn: &Connection) -> Result<(), String> {
         })
         .map_err(AppError::from)?;
     for row in rows {
-        let (id, name, email, notes, tags) = row.map_err(AppError::from)?;
+        let (id, short_name, email, notes, tags) = row.map_err(AppError::from)?;
         let email_val = email.as_deref().unwrap_or_default();
         let notes_val = notes.as_deref().unwrap_or_default();
         let body = format!("{email_val} {notes_val} {tags}");
         conn.execute(
             "INSERT INTO search_index (entity_type, entity_id, title, subtitle, body, tags) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
-            params!["client", id, &name, email_val, &body, &tags],
+            params!["client", id, &short_name, email_val, &body, &tags],
         )
         .map_err(AppError::from)?;
     }
 
     // Index engagements
     let mut stmt = conn
-        .prepare("SELECT e.id, e.name, c.name, e.scope_summary, e.notes, e.tags FROM engagements e JOIN clients c ON c.id = e.client_id WHERE e.is_active = 1")
+        .prepare("SELECT e.id, e.name, c.short_name, e.scope_summary, e.notes, e.tags FROM engagements e JOIN clients c ON c.id = e.client_id WHERE e.is_active = 1")
         .map_err(AppError::from)?;
     let rows = stmt
         .query_map([], |row| {
@@ -78,7 +78,7 @@ fn rebuild_search_index(conn: &Connection) -> Result<(), String> {
 
     // Index findings
     let mut stmt = conn
-        .prepare("SELECT f.id, f.title, f.overview, f.summary, f.tags, e.name, c.name FROM findings f JOIN engagements e ON e.id = f.engagement_id JOIN clients c ON c.id = e.client_id WHERE f.is_active = 1")
+        .prepare("SELECT f.id, f.title, f.overview, f.summary, f.tags, e.name, c.short_name FROM findings f JOIN engagements e ON e.id = f.engagement_id JOIN clients c ON c.id = e.client_id WHERE f.is_active = 1")
         .map_err(AppError::from)?;
     let rows = stmt
         .query_map([], |row| {
@@ -294,19 +294,19 @@ pub fn do_update_search_index_for_entity(
         "client" => {
             let row: Option<(u32, String, Option<String>, Option<String>, String)> = conn
                 .query_row(
-                    "SELECT id, name, contact_email, notes, tags FROM clients WHERE id = ? AND is_active = 1",
+                    "SELECT id, short_name, email, notes, tags FROM clients WHERE id = ? AND is_active = 1",
                     params![entity_id],
                     |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?, row.get(4)?)),
                 )
                 .optional()
                 .map_err(AppError::from)?;
-            if let Some((id, name, email, notes, tags)) = row {
+            if let Some((id, short_name, email, notes, tags)) = row {
                 let email_val = email.as_deref().unwrap_or_default();
                 let notes_val = notes.as_deref().unwrap_or_default();
                 let body = format!("{email_val} {notes_val} {tags}");
                 conn.execute(
                     "INSERT INTO search_index (entity_type, entity_id, title, subtitle, body, tags) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
-                    params!["client", id, &name, email_val, &body, &tags],
+                    params!["client", id, &short_name, email_val, &body, &tags],
                 )
                 .map_err(AppError::from)?;
             }
@@ -314,7 +314,7 @@ pub fn do_update_search_index_for_entity(
         "engagement" => {
             let row: Option<(u32, String, String, Option<String>, Option<String>, String)> = conn
                 .query_row(
-                    "SELECT e.id, e.name, c.name, e.scope_summary, e.notes, e.tags FROM engagements e JOIN clients c ON c.id = e.client_id WHERE e.id = ? AND e.is_active = 1",
+                    "SELECT e.id, e.name, c.short_name, e.scope_summary, e.notes, e.tags FROM engagements e JOIN clients c ON c.id = e.client_id WHERE e.id = ? AND e.is_active = 1",
                     params![entity_id],
                     |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?, row.get(4)?, row.get(5)?)),
                 )
@@ -337,7 +337,7 @@ pub fn do_update_search_index_for_entity(
         "finding" => {
             let row: Option<(u32, String, String, String, String, String, String)> = conn
                 .query_row(
-                    "SELECT f.id, f.title, f.overview, f.summary, f.tags, e.name, c.name FROM findings f JOIN engagements e ON e.id = f.engagement_id JOIN clients c ON c.id = e.client_id WHERE f.id = ? AND f.is_active = 1",
+                    "SELECT f.id, f.title, f.overview, f.summary, f.tags, e.name, c.short_name FROM findings f JOIN engagements e ON e.id = f.engagement_id JOIN clients c ON c.id = e.client_id WHERE f.id = ? AND f.is_active = 1",
                     params![entity_id],
                     |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?, row.get(4)?, row.get(5)?, row.get(6)?)),
                 )
@@ -396,8 +396,8 @@ mod tests {
         let n = COUNTER.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         let client_name = format!("Client-{n}");
         conn.execute(
-            "INSERT INTO clients (name, contact_email, notes, tags, is_active, created_at, updated_at)
-             VALUES (?1, NULL, NULL, '[]', 1, strftime('%s','now'), strftime('%s','now'))",
+            "INSERT INTO clients (short_name, registered_business_name, email, notes, tags, is_active, created_at, updated_at)
+             VALUES (?1, NULL, NULL, NULL, '[]', 1, strftime('%s','now'), strftime('%s','now'))",
             params![client_name],
         )
         .unwrap();
@@ -418,8 +418,8 @@ mod tests {
         let conn = test_conn();
         // Add a client
         conn.execute(
-            "INSERT INTO clients (name, contact_email, notes, tags, is_active, created_at, updated_at)
-             VALUES ('Acme Corporation', 'sec@acme.com', 'Notes here', '[]', 1, strftime('%s','now'), strftime('%s','now'))",
+            "INSERT INTO clients (short_name, registered_business_name, email, notes, tags, is_active, created_at, updated_at)
+             VALUES ('Acme Corporation', 'Acme Corporation', 'sec@acme.com', 'Notes here', '[]', 1, strftime('%s','now'), strftime('%s','now'))",
             params![],
         )
         .unwrap();
@@ -438,8 +438,8 @@ mod tests {
     fn test_global_search_finds_indexed_client() {
         let conn = test_conn();
         conn.execute(
-            "INSERT INTO clients (name, contact_email, notes, tags, is_active, created_at, updated_at)
-             VALUES ('AcmeCorporation', 'sec@acme.com', 'Notes', '[]', 1, strftime('%s','now'), strftime('%s','now'))",
+            "INSERT INTO clients (short_name, registered_business_name, email, notes, tags, is_active, created_at, updated_at)
+             VALUES ('AcmeCorporation', 'AcmeCorporation', 'sec@acme.com', 'Notes', '[]', 1, strftime('%s','now'), strftime('%s','now'))",
             params![],
         )
         .unwrap();
@@ -481,8 +481,8 @@ mod tests {
     fn test_update_index_replaces_old_entry() {
         let conn = test_conn();
         conn.execute(
-            "INSERT INTO clients (name, contact_email, notes, tags, is_active, created_at, updated_at)
-             VALUES ('Acme', NULL, NULL, '[]', 1, strftime('%s','now'), strftime('%s','now'))",
+            "INSERT INTO clients (short_name, registered_business_name, email, notes, tags, is_active, created_at, updated_at)
+             VALUES ('Acme', 'Acme', NULL, NULL, '[]', 1, strftime('%s','now'), strftime('%s','now'))",
             params![],
         )
         .unwrap();
@@ -491,7 +491,7 @@ mod tests {
 
         // Update client name
         conn.execute(
-            "UPDATE clients SET name = 'Wayne Enterprises' WHERE id = ?1",
+            "UPDATE clients SET short_name = 'Wayne Enterprises' WHERE id = ?1",
             params![id],
         )
         .unwrap();
@@ -509,8 +509,8 @@ mod tests {
     fn test_search_index_cleared_on_delete() {
         let conn = test_conn();
         conn.execute(
-            "INSERT INTO clients (name, contact_email, notes, tags, is_active, created_at, updated_at)
-             VALUES ('Doomed', NULL, NULL, '[]', 1, strftime('%s','now'), strftime('%s','now'))",
+            "INSERT INTO clients (short_name, registered_business_name, email, notes, tags, is_active, created_at, updated_at)
+             VALUES ('Doomed', 'Doomed', NULL, NULL, '[]', 1, strftime('%s','now'), strftime('%s','now'))",
             params![],
         )
         .unwrap();
@@ -530,8 +530,8 @@ mod tests {
     fn test_empty_query_returns_empty() {
         let conn = test_conn();
         conn.execute(
-            "INSERT INTO clients (name, contact_email, notes, tags, is_active, created_at, updated_at)
-             VALUES ('HasStuff', NULL, NULL, '[]', 1, strftime('%s','now'), strftime('%s','now'))",
+            "INSERT INTO clients (short_name, registered_business_name, email, notes, tags, is_active, created_at, updated_at)
+             VALUES ('HasStuff', 'HasStuff', NULL, NULL, '[]', 1, strftime('%s','now'), strftime('%s','now'))",
             params![],
         )
         .unwrap();
