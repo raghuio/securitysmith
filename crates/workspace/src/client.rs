@@ -5,7 +5,7 @@ use std::fs;
 use crate::Workspace;
 use crate::WorkspaceError;
 
-pub const CLIENT_FILE: &str = "client.toml";
+pub const CLIENT_FILE: &str = "client-config.toml";
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Client {

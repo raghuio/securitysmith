@@ -56,10 +56,10 @@ sm client list
 ```
 ~/securitysmith/
 └── acme-2026/
-    ├── securitysmith.toml
+    ├── config.toml
     └── clients/
         └── acme/
-            └── client.toml
+            └── client-config.toml
 ```
 
 ## Configuration

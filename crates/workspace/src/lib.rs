@@ -10,7 +10,7 @@ pub mod global;
 pub use client::Client;
 pub use global::GlobalConfig;
 
-pub const CONFIG_FILE: &str = "securitysmith.toml";
+pub const CONFIG_FILE: &str = "config.toml";
 
 #[derive(Debug, Error)]
 pub enum WorkspaceError {
@@ -88,8 +88,6 @@ impl Workspace {
         }
 
         fs::create_dir_all(&root)?;
-        let clients_dir = root.join("clients");
-        fs::create_dir_all(&clients_dir)?;
 
         let config = WorkspaceConfig::named(name);
         let toml = toml::to_string_pretty(&config)?;
@@ -134,13 +132,13 @@ mod tests {
     use tempfile::TempDir;
 
     #[test]
-    fn workspace_init_creates_config_and_clients_dir() {
+    fn workspace_init_creates_config_only() {
         let tmp = TempDir::new().unwrap();
         let path = Utf8PathBuf::from_path_buf(tmp.path().to_path_buf()).unwrap();
         let ws = Workspace::init(&path).unwrap();
 
         assert!(ws.root.join(CONFIG_FILE).exists());
-        assert!(ws.root.join("clients").exists());
+        assert!(!ws.root.join("clients").exists());
     }
 
     #[test]
