@@ -27,7 +27,7 @@ Everything is stored locally and is git-friendly.
 cargo build --release
 ```
 
-The `sm` binary is produced in `target/release/sm`.
+The `sm` binary is produced in `target/release/sm`. It is built and run on Linux, macOS, Windows, OpenBSD, and FreeBSD.
 
 ## Quick start
 
