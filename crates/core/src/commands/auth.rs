@@ -40,7 +40,8 @@ pub async fn create_vault(
     }
 
     let salt = crypto::generate_salt();
-    let key = crypto::derive_key_async(password, salt).await
+    let key = crypto::derive_key_async(password, salt)
+        .await
         .map_err(|e| format!("Key derivation failed: {}", e))?;
 
     // Write version file: "2:<hex_salt>"
@@ -136,7 +137,8 @@ pub async fn unlock_vault(
         return Err(format!("Rate limited: wait {} seconds", cooldown));
     }
 
-    let key = crypto::derive_key_async(password, salt).await
+    let key = crypto::derive_key_async(password, salt)
+        .await
         .map_err(|e| format!("Key derivation failed: {}", e))?;
 
     let conn = match db::open_vault(&data_dir, &key) {
@@ -274,7 +276,8 @@ pub async fn validate_recovery_words(
         .map_err(|e| format!("Failed to get data directory: {}", e))?;
 
     let salt = crypto::generate_salt();
-    let recovery_key = crypto::derive_recovery_key_async(pending.phrase, salt).await
+    let recovery_key = crypto::derive_recovery_key_async(pending.phrase, salt)
+        .await
         .map_err(|e| format!("Recovery key derivation failed: {}", e))?;
 
     let (nonce, ciphertext) = crypto::encrypt_envelope(&vault_key, &recovery_key)
@@ -291,9 +294,7 @@ pub async fn validate_recovery_words(
             .vault
             .lock()
             .map_err(|_| "Internal state error".to_string())?;
-        let conn = vault_guard
-            .connection()
-            .map_err(|e| e.to_string())?;
+        let conn = vault_guard.connection().map_err(|e| e.to_string())?;
         db::store_recovery(conn, &envelope, &salt)?;
 
         // Audit log actions: "INSERT" for first-time setup, "UPDATE" for
@@ -424,7 +425,10 @@ pub async fn recover_vault(
         .vault
         .lock()
         .map_err(|_| "Internal state error".to_string())?;
-    *vault = VaultState::Unlocked { conn, key: vault_key };
+    *vault = VaultState::Unlocked {
+        conn,
+        key: vault_key,
+    };
 
     *state
         .failed_attempts
@@ -473,7 +477,8 @@ pub async fn rotate_recovery_phrase(
         .try_into()
         .map_err(|_| "Vault metadata corrupted: invalid salt length".to_string())?;
 
-    let key = crypto::derive_key_async(password, salt).await
+    let key = crypto::derive_key_async(password, salt)
+        .await
         .map_err(|e| format!("Key derivation failed: {}", e))?;
 
     // Verify password by opening vault; wrong password ticks the shared
@@ -558,7 +563,8 @@ pub async fn change_master_password(
         .try_into()
         .map_err(|_| "Vault metadata corrupted: invalid salt length".to_string())?;
 
-    let old_key = crypto::derive_key_async(old_password, old_salt).await
+    let old_key = crypto::derive_key_async(old_password, old_salt)
+        .await
         .map_err(|e| format!("Key derivation failed: {}", e))?;
 
     // Open the vault with the OLD key to verify the password and grab a
@@ -574,7 +580,8 @@ pub async fn change_master_password(
 
     // Derive the new key and re-key the SQLCipher database.
     let new_salt = crypto::generate_salt();
-    let new_key = crypto::derive_key_async(new_password, new_salt).await
+    let new_key = crypto::derive_key_async(new_password, new_salt)
+        .await
         .map_err(|e| format!("Key derivation failed: {}", e))?;
 
     db::rekey_vault(&conn, &old_key, &new_key)

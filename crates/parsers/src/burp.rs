@@ -51,7 +51,9 @@ impl FindingParser for BurpParser {
                         .to_string();
                     if let Some(ref mut c) = current {
                         match name.as_str() {
-                            "name" => { c.title.clone_from(&text_buf); },
+                            "name" => {
+                                c.title.clone_from(&text_buf);
+                            }
                             "severity" => c.severity = normalize_severity(&text_buf),
                             "host" => {
                                 c.affected_endpoints.push(AffectedEndpoint {

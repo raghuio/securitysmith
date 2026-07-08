@@ -122,8 +122,7 @@ fn rebuild_search_index(conn: &Connection) -> Result<(), String> {
         })
         .map_err(AppError::from)?;
     for row in rows {
-        let (id, name, category, subcategory, content, tags) =
-            row.map_err(AppError::from)?;
+        let (id, name, category, subcategory, content, tags) = row.map_err(AppError::from)?;
         let subtitle = format!("{category} / {subcategory}");
         conn.execute(
             "INSERT INTO search_index (entity_type, entity_id, title, subtitle, body, tags) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
@@ -385,10 +384,9 @@ pub fn rebuild_search_index_command(state: State<AppState>) -> Result<(), String
 
 #[cfg(test)]
 mod tests {
-    use crate::test_helpers::test_conn;
     use super::*;
     use crate::db;
-
+    use crate::test_helpers::test_conn;
 
     static COUNTER: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
 

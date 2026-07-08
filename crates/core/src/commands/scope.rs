@@ -56,7 +56,9 @@ fn validate_item(input: &ScopeItemInput) -> crate::error::Result<()> {
         return Err(AppError::Generic("Value is required.".to_string()));
     }
     if input.value.len() > 2000 {
-        return Err(AppError::Generic("Value must be 2,000 characters or fewer.".to_string()));
+        return Err(AppError::Generic(
+            "Value must be 2,000 characters or fewer.".to_string(),
+        ));
     }
     validate_type(&input.item_type)?;
     Ok(())
@@ -99,7 +101,10 @@ pub fn do_list_scope_items(
 }
 
 #[must_use]
-pub fn do_create_scope_item(conn: &Connection, input: &ScopeItemInput) -> crate::error::Result<u32> {
+pub fn do_create_scope_item(
+    conn: &Connection,
+    input: &ScopeItemInput,
+) -> crate::error::Result<u32> {
     validate_item(input)?;
     conn.execute(
         "INSERT INTO scope_items (engagement_id, item_type, value, is_in_scope, environment, notes, sort_order, updated_at)
@@ -305,10 +310,9 @@ pub fn export_scope_text(state: State<AppState>, engagement_id: u32) -> Result<S
 
 #[cfg(test)]
 mod tests {
-    use crate::test_helpers::test_conn;
     use super::*;
     use crate::db;
-
+    use crate::test_helpers::test_conn;
 
     static COUNTER: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
 

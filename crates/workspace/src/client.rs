@@ -106,7 +106,11 @@ impl Client {
     }
 
     pub fn load(workspace: &Workspace, short_name: &str) -> Result<Self, WorkspaceError> {
-        let path = workspace.root.join("clients").join(short_name).join(CLIENT_FILE);
+        let path = workspace
+            .root
+            .join("clients")
+            .join(short_name)
+            .join(CLIENT_FILE);
         if !path.exists() {
             return Err(WorkspaceError::NotFound(path));
         }
@@ -155,7 +159,7 @@ impl Client {
             return Err(WorkspaceError::AlreadyExists(target_dir));
         }
 
-        fs::create_dir_all(&target_dir.parent().unwrap())?;
+        fs::create_dir_all(target_dir.parent().unwrap())?;
 
         if fs::rename(&source_dir, &target_dir).is_err() {
             Self::copy_dir_all(source_dir.as_std_path(), target_dir.as_std_path())?;

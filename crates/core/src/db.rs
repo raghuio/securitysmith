@@ -26,11 +26,13 @@ const NOTIFICATIONS_SQL: &str = include_str!("../migrations/029_notifications.sq
 const COMPLIANCE_SQL: &str = include_str!("../migrations/030_compliance.sql");
 const PROJECTS_SQL: &str = include_str!("../migrations/031_projects.sql");
 const PROJECT_CONTACTS_SQL: &str = include_str!("../migrations/032_project_contacts.sql");
-const ENGAGEMENT_TYPE_LABELS_SQL: &str = include_str!("../migrations/033_engagement_type_labels.sql");
+const ENGAGEMENT_TYPE_LABELS_SQL: &str =
+    include_str!("../migrations/033_engagement_type_labels.sql");
 const CLIENT_HISTORY_SQL: &str = include_str!("../migrations/034_client_history.sql");
 const ALTER_CLIENTS_SQL: &str = include_str!("../migrations/035_alter_clients.sql");
 const ALTER_ENGAGEMENTS_SQL: &str = include_str!("../migrations/036_alter_engagements.sql");
-const UNCATEGORIZED_PROJECTS_SQL: &str = include_str!("../migrations/037_uncategorized_projects.sql");
+const UNCATEGORIZED_PROJECTS_SQL: &str =
+    include_str!("../migrations/037_uncategorized_projects.sql");
 
 /// Open or create the encrypted SQLite vault at the given directory.
 /// The database file is named `vault.db` and is encrypted with SQLCipher
@@ -52,7 +54,10 @@ pub fn open_vault(data_dir: &Path, key: &[u8; 32]) -> Result<Connection, String>
     // Apply SQLCipher encryption key as raw hex bytes.
     // hex::encode guarantees only [0-9a-f], but we assert as defense-in-depth.
     let key_hex = hex::encode(key);
-    debug_assert!(key_hex.chars().all(|c| c.is_ascii_hexdigit()), "key_hex must be hex digits");
+    debug_assert!(
+        key_hex.chars().all(|c| c.is_ascii_hexdigit()),
+        "key_hex must be hex digits"
+    );
     conn.execute_batch(&format!("PRAGMA key = \"x'{}'\";", key_hex))
         .map_err(|e| format!("Failed to set encryption key: {e}"))?;
 
@@ -73,7 +78,8 @@ pub fn rekey_vault(
     let old_hex = hex::encode(old_key);
     let new_hex = hex::encode(new_key);
     debug_assert!(
-        old_hex.chars().all(|c| c.is_ascii_hexdigit()) && new_hex.chars().all(|c| c.is_ascii_hexdigit()),
+        old_hex.chars().all(|c| c.is_ascii_hexdigit())
+            && new_hex.chars().all(|c| c.is_ascii_hexdigit()),
         "key_hex must be hex digits"
     );
     conn.execute_batch(&format!(
@@ -150,11 +156,21 @@ fn run_migrations(conn: &Connection) -> Result<(), String> {
     apply_migration(conn, 30, "compliance", COMPLIANCE_SQL)?;
     apply_migration(conn, 31, "projects", PROJECTS_SQL)?;
     apply_migration(conn, 32, "project_contacts", PROJECT_CONTACTS_SQL)?;
-    apply_migration(conn, 33, "engagement_type_labels", ENGAGEMENT_TYPE_LABELS_SQL)?;
+    apply_migration(
+        conn,
+        33,
+        "engagement_type_labels",
+        ENGAGEMENT_TYPE_LABELS_SQL,
+    )?;
     apply_migration(conn, 34, "client_history", CLIENT_HISTORY_SQL)?;
     apply_migration(conn, 35, "alter_clients", ALTER_CLIENTS_SQL)?;
     apply_migration(conn, 36, "alter_engagements", ALTER_ENGAGEMENTS_SQL)?;
-    apply_migration(conn, 37, "uncategorized_projects", UNCATEGORIZED_PROJECTS_SQL)?;
+    apply_migration(
+        conn,
+        37,
+        "uncategorized_projects",
+        UNCATEGORIZED_PROJECTS_SQL,
+    )?;
 
     seed_builtin_templates(conn)?;
     seed_default_news_feeds(conn)?;
@@ -294,7 +310,7 @@ fn fix_broken_clients_schema(conn: &Connection) -> Result<(), String> {
         CREATE INDEX IF NOT EXISTS idx_clients_status ON clients(status);
         CREATE INDEX IF NOT EXISTS idx_clients_active ON clients(is_active);
 
-        PRAGMA foreign_keys = ON;"
+        PRAGMA foreign_keys = ON;",
     );
 
     if let Err(e) = result {

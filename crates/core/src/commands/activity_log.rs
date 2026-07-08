@@ -229,10 +229,9 @@ pub fn prune_audit_log(state: State<AppState>, before_date: String) -> Result<u3
 
 #[cfg(test)]
 mod tests {
-    use crate::test_helpers::test_conn;
     use super::*;
     use crate::db;
-
+    use crate::test_helpers::test_conn;
 
     #[test]
     fn test_activity_log_empty_returns_empty_list() {

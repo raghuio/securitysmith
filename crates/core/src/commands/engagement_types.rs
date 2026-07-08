@@ -95,10 +95,14 @@ pub fn do_delete_engagement_type(conn: &Connection, id: u32) -> crate::error::Re
 
 fn validate_label(label: &str) -> Result<(), AppError> {
     if label.trim().is_empty() {
-        return Err(AppError::Validation("Engagement type label is required.".to_string()));
+        return Err(AppError::Validation(
+            "Engagement type label is required.".to_string(),
+        ));
     }
     if label.len() > 100 {
-        return Err(AppError::Validation("Label must be 100 characters or fewer.".to_string()));
+        return Err(AppError::Validation(
+            "Label must be 100 characters or fewer.".to_string(),
+        ));
     }
     Ok(())
 }
@@ -120,8 +124,7 @@ pub fn create_engagement_type(
         .map_err(|_| "Internal state error".to_string())?;
     let conn = vault.connection().map_err(|e| e.to_string())?;
 
-    do_create_engagement_type(conn, label.trim(), description.as_deref())
-        .map_err(|e| e.to_string())
+    do_create_engagement_type(conn, label.trim(), description.as_deref()).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -145,7 +148,9 @@ pub fn update_engagement_type(
     label: Option<String>,
     description: Option<String>,
 ) -> Result<(), String> {
-    if let Some(ref l) = label { validate_label(l)?; }
+    if let Some(ref l) = label {
+        validate_label(l)?;
+    }
     let mut vault = state
         .vault
         .lock()
@@ -179,10 +184,10 @@ mod tests {
     #[test]
     fn test_create_and_list_types() {
         let conn = test_conn();
-        let id1 = do_create_engagement_type(&conn, "Pentest", Some("Standard penetration test")
-        ).unwrap();
-        let id2 = do_create_engagement_type(&conn, "VAPT", Some("Vulnerability assessment + PT")
-        ).unwrap();
+        let id1 =
+            do_create_engagement_type(&conn, "Pentest", Some("Standard penetration test")).unwrap();
+        let id2 = do_create_engagement_type(&conn, "VAPT", Some("Vulnerability assessment + PT"))
+            .unwrap();
 
         let list = do_list_engagement_types(&conn, false).unwrap();
         assert_eq!(list.len(), 2);
@@ -209,6 +214,11 @@ mod tests {
         do_create_engagement_type(&conn, "Pentest", None).unwrap();
         let result = do_create_engagement_type(&conn, "Pentest", None);
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("UNIQUE constraint"));
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("UNIQUE constraint")
+        );
     }
 }

@@ -1,5 +1,5 @@
-use rusqlite::Connection;
 use crate::db;
+use rusqlite::Connection;
 
 /// Create a temporary in-memory vault for testing.
 /// The vault is initialized with a zeroed key and all migrations applied.

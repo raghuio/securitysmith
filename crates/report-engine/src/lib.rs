@@ -1,5 +1,10 @@
-#![allow(unused_mut, clippy::must_use_candidate, clippy::double_must_use, clippy::too_many_arguments)]
-use printpdf::{PdfDocument, BuiltinFont, Mm};
+#![allow(
+    unused_mut,
+    clippy::must_use_candidate,
+    clippy::double_must_use,
+    clippy::too_many_arguments
+)]
+use printpdf::{BuiltinFont, Mm, PdfDocument};
 use std::io::BufWriter;
 
 pub struct ReportData {
@@ -23,16 +28,34 @@ impl ReportData {
         }
     }
 
-    pub fn name(&self) -> &str { &self.name }
-    pub fn client_name(&self) -> &str { &self.client_name }
-    pub fn engagement_name(&self) -> &str { &self.engagement_name }
-    pub fn executive_summary(&self) -> &str { &self.executive_summary }
-    pub fn appendix(&self) -> &str { &self.appendix }
-    pub fn finding_titles(&self) -> &[String] { &self.finding_titles }
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+    pub fn client_name(&self) -> &str {
+        &self.client_name
+    }
+    pub fn engagement_name(&self) -> &str {
+        &self.engagement_name
+    }
+    pub fn executive_summary(&self) -> &str {
+        &self.executive_summary
+    }
+    pub fn appendix(&self) -> &str {
+        &self.appendix
+    }
+    pub fn finding_titles(&self) -> &[String] {
+        &self.finding_titles
+    }
 
-    pub fn set_executive_summary(&mut self, text: String) { self.executive_summary = text; }
-    pub fn set_appendix(&mut self, text: String) { self.appendix = text; }
-    pub fn set_finding_titles(&mut self, titles: Vec<String>) { self.finding_titles = titles; }
+    pub fn set_executive_summary(&mut self, text: String) {
+        self.executive_summary = text;
+    }
+    pub fn set_appendix(&mut self, text: String) {
+        self.appendix = text;
+    }
+    pub fn set_finding_titles(&mut self, titles: Vec<String>) {
+        self.finding_titles = titles;
+    }
 }
 
 pub fn generate_pdf(report: &ReportData, save_path: &str) -> Result<(), String> {

@@ -52,8 +52,9 @@ pub fn do_create_retest_engagement(
         .optional()
         .map_err(AppError::from)?;
 
-    let (client_id, orig_name, _client_name, target_area, assessment_kind) =
-        original.ok_or(AppError::Generic("Original engagement not found.".to_string()))?;
+    let (client_id, orig_name, _client_name, target_area, assessment_kind) = original.ok_or(
+        AppError::Generic("Original engagement not found.".to_string()),
+    )?;
 
     let retest_name = format!("Retest: {orig_name}");
 
@@ -221,7 +222,9 @@ pub fn do_bulk_update_finding_status(
         "no_response",
     ];
     if !valid.contains(&client_response) {
-        return Err(AppError::Generic(format!("Invalid client_response: {client_response}")));
+        return Err(AppError::Generic(format!(
+            "Invalid client_response: {client_response}"
+        )));
     }
     for id in finding_ids {
         conn.execute(

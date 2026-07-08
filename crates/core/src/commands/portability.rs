@@ -123,9 +123,20 @@ fn serialize_value(val: rusqlite::types::Value) -> serde_json::Value {
 }
 
 const EXPORT_TABLES: &[&str] = &[
-    "clients", "engagements", "findings", "credentials", "documents",
-    "invoices", "templates", "reports", "checklists", "compliance_frameworks",
-    "compliance_controls", "news_articles", "feeds", "time_entries",
+    "clients",
+    "engagements",
+    "findings",
+    "credentials",
+    "documents",
+    "invoices",
+    "templates",
+    "reports",
+    "checklists",
+    "compliance_frameworks",
+    "compliance_controls",
+    "news_articles",
+    "feeds",
+    "time_entries",
 ];
 
 fn table_to_json(
@@ -675,7 +686,11 @@ pub fn preview_import(state: State<AppState>, file_path: String) -> Result<Impor
         clients_file.read_to_string(&mut clients_raw).ok();
         if let Ok(clients) = serde_json::from_str::<Vec<serde_json::Value>>(&clients_raw) {
             for client in clients {
-                if let Some(name) = client.get("short_name").and_then(|n| n.as_str()).or_else(|| client.get("name").and_then(|n| n.as_str())) {
+                if let Some(name) = client
+                    .get("short_name")
+                    .and_then(|n| n.as_str())
+                    .or_else(|| client.get("name").and_then(|n| n.as_str()))
+                {
                     let exists: i64 = conn
                         .query_row(
                             "SELECT COUNT(*) FROM clients WHERE short_name = ? AND is_active = 1",
@@ -748,15 +763,29 @@ pub fn execute_import(
         clients_file.read_to_string(&mut clients_raw).ok();
         if let Ok(clients) = serde_json::from_str::<Vec<serde_json::Value>>(&clients_raw) {
             for client in clients {
-                let short_name = client.get("short_name").and_then(|n| n.as_str()).or_else(|| client.get("name").and_then(|n| n.as_str())).unwrap_or("");
-                let registered = client.get("registered_business_name").and_then(|n| n.as_str()).unwrap_or(short_name);
-                let email = client.get("email").and_then(|v| v.as_str()).or_else(|| client.get("contact_email").and_then(|v| v.as_str())).unwrap_or("");
+                let short_name = client
+                    .get("short_name")
+                    .and_then(|n| n.as_str())
+                    .or_else(|| client.get("name").and_then(|n| n.as_str()))
+                    .unwrap_or("");
+                let registered = client
+                    .get("registered_business_name")
+                    .and_then(|n| n.as_str())
+                    .unwrap_or(short_name);
+                let email = client
+                    .get("email")
+                    .and_then(|v| v.as_str())
+                    .or_else(|| client.get("contact_email").and_then(|v| v.as_str()))
+                    .unwrap_or("");
                 let key = format!("client::{short_name}");
                 if skip_set.contains(&key) {
                     *skipped.entry("clients".to_string()).or_insert(0) += 1;
                     continue;
                 }
-                let final_name = rename_map.get(&key).map(|s| s.as_str()).unwrap_or(short_name);
+                let final_name = rename_map
+                    .get(&key)
+                    .map(|s| s.as_str())
+                    .unwrap_or(short_name);
 
                 let old_id = client.get("id").and_then(|v| v.as_i64()).unwrap_or(0);
 
@@ -1104,9 +1133,7 @@ pub fn encrypt_export_file(plaintext: &[u8], password: &str) -> Result<Vec<u8>, 
     let key = aes_gcm::Key::<Aes256Gcm>::from_slice(&key_bytes);
     let cipher = Aes256Gcm::new(key);
     let nonce = Nonce::from_slice(&nonce_bytes);
-    let ciphertext = cipher
-        .encrypt(nonce, plaintext)
-        .map_err(AppError::from)?;
+    let ciphertext = cipher.encrypt(nonce, plaintext).map_err(AppError::from)?;
 
     let mut out = Vec::with_capacity(EXPORT_MAGIC.len() + SALT_LEN + NONCE_LEN + ciphertext.len());
     out.extend_from_slice(EXPORT_MAGIC);
@@ -1157,8 +1184,8 @@ fn read_file_or_decrypt(file_path: &str, password: Option<&str>) -> Result<Vec<u
 
 #[cfg(test)]
 mod tests {
-    use crate::test_helpers::test_conn;
     use super::*;
+    use crate::test_helpers::test_conn;
 
     #[test]
     fn test_encrypt_decrypt_roundtrip() {

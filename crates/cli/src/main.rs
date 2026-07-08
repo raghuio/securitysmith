@@ -1,269 +1,251 @@
-use camino::Utf8PathBuf;
-use clap::{Parser, Subcommand};
-use ss_workspace::{Client, GlobalConfig, Workspace, WorkspaceError};
-use std::path::PathBuf;
+use clap::Parser;
+use ss_workspace::{Workspace, global::GlobalConfig};
 
-#[derive(Parser)]
-#[command(name = "sm")]
-#[command(about = "A CLI for managing penetration testing engagements")]
-#[command(version)]
-struct Cli {
-    #[command(subcommand)]
-    command: Commands,
-}
+mod cli_def;
+mod error;
 
-#[derive(Subcommand)]
-enum Commands {
-    /// Create a new workspace
-    #[command(visible_alias = "n")]
-    New {
-        /// Exact path where the workspace should be created
-        path: Option<Utf8PathBuf>,
-
-        /// Name of the workspace; creates it under the configured default root
-        #[arg(short, long)]
-        name: Option<String>,
-    },
-
-    /// Show the current workspace
-    #[command(visible_alias = "h")]
-    Here,
-
-    /// Manage clients
-    #[command(visible_alias = "c")]
-    Client {
-        #[command(subcommand)]
-        action: ClientAction,
-    },
-
-    /// Manage global configuration
-    #[command(visible_alias = "cfg")]
-    Config {
-        #[command(subcommand)]
-        action: Option<ConfigAction>,
-    },
-}
-
-#[derive(Subcommand)]
-enum ClientAction {
-    /// Add a new client to the current workspace
-    #[command(visible_alias = "a")]
-    Add {
-        /// Short name used for directories and commands
-        #[arg(short, long)]
-        short: String,
-        /// Full display name of the client
-        #[arg(short, long)]
-        display: String,
-    },
-    /// List clients in the current workspace
-    #[command(visible_alias = "l")]
-    List,
-    /// Remove a client and all its files
-    #[command(visible_alias = "r")]
-    Rm {
-        /// Short name of the client to remove
-        short: String,
-    },
-    /// Rename a client
-    #[command(visible_alias = "re")]
-    Rename {
-        /// Current short name
-        old: String,
-        /// New short name
-        new: String,
-    },
-    /// Move a client to another workspace
-    #[command(visible_alias = "m")]
-    Move {
-        /// Short name of the client to move
-        short: String,
-        /// Path or name of the target workspace
-        #[arg(short, long)]
-        to: String,
-    },
-}
-
-#[derive(Subcommand)]
-enum ConfigAction {
-    /// Show the current global configuration
-    #[command(visible_alias = "s")]
-    Show,
-    /// Set a global configuration value
-    #[command(visible_alias = "se")]
-    Set {
-        /// Setting name (e.g., default_workspace_root)
-        key: String,
-        /// Setting value
-        value: String,
-    },
-}
+use cli_def::{Cli, Commands, ConfigAction};
+use error::{exit_code, fail, workspace_error};
 
 fn main() {
-    if let Err(e) = run() {
-        eprintln!("error: {e}");
-        std::process::exit(1);
+    let cli = Cli::parse();
+
+    let result = run(cli);
+    if let Err((msg, code)) = result {
+        fail(&msg, code);
     }
 }
 
-fn run() -> Result<(), WorkspaceError> {
-    let cli = Cli::parse();
-
+fn run(cli: Cli) -> Result<(), (String, i32)> {
     match cli.command {
-        Commands::New { path, name } => {
-            let target = resolve_new_target(path, name)?;
-            let ws = Workspace::init(&target)?;
-
-            let mut global = GlobalConfig::load()?;
-            let ws_name = ws.config.workspace.name.clone();
-            global.register_workspace(&ws_name, &ws.root);
-            global.save()?;
-
-            println!("Created workspace at {}", ws.root);
+        Commands::New { path } => cmd_new(path, cli.workspace.as_deref()),
+        Commands::Status => cmd_status(cli.workspace.as_deref()),
+        Commands::Config { action } => cmd_config(action),
+        Commands::Check { fix } => cmd_check(fix, cli.workspace.as_deref()),
+        Commands::Ls {
+            path,
+            findings,
+            requirements,
+            notes,
+            scope,
+            severity,
+            status,
+        } => {
+            let _ = (&findings, &requirements, &notes, &scope, &severity, &status);
+            stub("ls", path.as_deref())
         }
-        Commands::Here => {
-            let cwd = current_dir()?;
-            let ws = Workspace::find(&cwd)?;
-            println!("Workspace: {}", ws.root);
-            println!("Name: {}", ws.config.workspace.name);
+        Commands::Show { path } => stub("show", Some(&path)),
+        Commands::Edit { path } => stub("edit", Some(&path)),
+        Commands::Rm { path, force } => {
+            if !force {
+                return Err((
+                    format!(
+                        "Removing `{}` requires `--force`. Re-run with `--force` to confirm.",
+                        path
+                    ),
+                    exit_code::FORCE_FLAG_MISSING,
+                ));
+            }
+            stub("rm", Some(&path))
         }
-        Commands::Client { action } => {
-            let cwd = current_dir()?;
-            let ws = Workspace::find(&cwd)?;
-            match action {
-                ClientAction::Add { short, display } => {
-                    let client = Client::new(&short, &display);
-                    client.create(&ws)?;
-                    println!("Created client {} at {}", short, client.dir(&ws));
+        Commands::Stats { client, all } => {
+            let _ = (client, all);
+            stub_no_path("stats")
+        }
+        Commands::Finding {
+            path_or_id,
+            title,
+            status,
+            severity,
+            export,
+            to,
+            no_template,
+        } => {
+            let _ = (title, status, severity, export, to, no_template);
+            stub("finding", Some(&path_or_id))
+        }
+        Commands::Req {
+            path_or_id,
+            title,
+            status,
+            no_template,
+        } => {
+            let _ = (title, status, no_template);
+            stub("req", Some(&path_or_id))
+        }
+        Commands::Scope { path } => stub("scope", Some(&path)),
+        Commands::Note { path, message } => {
+            let _ = message;
+            stub("note", Some(&path))
+        }
+        Commands::Report {
+            path,
+            format,
+            template,
+            to,
+        } => {
+            let _ = (format, template, to);
+            stub("report", Some(&path))
+        }
+        Commands::Sow {
+            path,
+            format,
+            template,
+            to,
+        } => {
+            let _ = (format, template, to);
+            stub("sow", Some(&path))
+        }
+    }
+}
+
+/// Create a workspace or entity.
+fn cmd_new(path: Option<String>, _workspace: Option<&str>) -> Result<(), (String, i32)> {
+    match path {
+        None => {
+            // sm new — create workspace in current directory
+            let cwd = ss_workspace::current_dir().map_err(|e| workspace_error(&e))?;
+            create_workspace(&cwd)
+        }
+        Some(p) if ss_workspace::is_absolute_path(&p) => {
+            // sm new <absolute_path> — create workspace at path
+            let target = ss_workspace::expand_tilde(&p);
+            create_workspace(&target)
+        }
+        Some(p) => {
+            // sm new <name> or <client>/<name> etc — entity creation (slice 2+)
+            let segments: Vec<&str> = p.split('/').collect();
+            match segments.len() {
+                1 => {
+                    // Could be a client name or a workspace name under default workspace
+                    // For now, treat single name as workspace under default workspace
+                    // Full client creation is in slice 2
+                    let global = GlobalConfig::load().map_err(|e| workspace_error(&e))?;
+                    let default = global
+                        .default_workspace()
+                        .ok_or((
+                            "No default workspace configured. Set one with `sm config set default_workspace <path>`."
+                                .to_string(),
+                            exit_code::NOT_A_WORKSPACE,
+                        ))?;
+                    let target = default.join(segments[0]);
+                    create_workspace(&target)
                 }
-                ClientAction::List => {
-                    let clients = Client::list(&ws)?;
-                    if clients.is_empty() {
-                        println!("No clients in workspace.");
-                    } else {
-                        for client in clients {
-                            println!("{} - {}", client.short_name, client.display_name);
-                        }
-                    }
-                }
-                ClientAction::Rm { short } => {
-                    Client::remove(&ws, &short)?;
-                    println!("Removed client {}", short);
-                }
-                ClientAction::Rename { old, new } => {
-                    Client::rename(&ws, &old, &new)?;
-                    println!("Renamed client {} to {}", old, new);
-                }
-                ClientAction::Move { short, to } => {
-                    let target_ws = resolve_target_workspace(&ws, &to)?;
-                    Client::move_to_workspace(&ws, &short, &target_ws)?;
-                    println!("Moved client {} to {}", short, target_ws.root);
+                _ => {
+                    // Multi-segment — hierarchy creation (slice 2+)
+                    stub("new entity", Some(&p))
                 }
             }
         }
-        Commands::Config { action } => {
-            let mut global = GlobalConfig::load()?;
-            match action {
-                None | Some(ConfigAction::Show) => {
-                    println!("config file: {}", ss_workspace::global::config_path()?);
-                    match global.default_root() {
-                        Some(root) => println!("default_workspace_root: {}", root),
-                        None => println!("default_workspace_root: not set"),
-                    }
-                    println!("known workspaces:");
-                    for ws in &global.workspaces {
-                        println!("  {} = {}", ws.name, ws.path);
-                    }
-                }
-                Some(ConfigAction::Set { key, value }) => {
-                    match key.as_str() {
-                        "default_workspace_root" => {
-                            let expanded = expand_tilde(&value);
-                            let path = Utf8PathBuf::from_path_buf(expanded)
-                                .map_err(|p| WorkspaceError::Io(std::io::Error::new(
-                                    std::io::ErrorKind::InvalidData,
-                                    format!("path is not valid UTF-8: {:?}", p),
-                                )))?;
-                            global.set_default_root(path);
-                            global.save()?;
-                            println!("Set default_workspace_root to {}", global.default_root().unwrap());
-                        }
-                        _ => {
-                            eprintln!("error: unknown config key: {}", key);
-                            std::process::exit(1);
-                        }
-                    }
-                }
+    }
+}
+
+/// Create a workspace and register it in the global config.
+fn create_workspace(path: &camino::Utf8PathBuf) -> Result<(), (String, i32)> {
+    let ws = Workspace::init(path).map_err(|e| workspace_error(&e))?;
+
+    let mut global = GlobalConfig::load().map_err(|e| workspace_error(&e))?;
+    let name = ws.config.workspace.name.clone();
+    global.register_workspace(&name, &ws.root);
+    global.save().map_err(|e| workspace_error(&e))?;
+
+    println!("Created workspace at {}", ws.root);
+    println!("Name: {}", ws.config.workspace.name);
+    println!("Suggest: cd {} && git init", ws.root);
+    Ok(())
+}
+
+/// Show current workspace info.
+fn cmd_status(workspace: Option<&str>) -> Result<(), (String, i32)> {
+    let ws = Workspace::resolve(workspace).map_err(|e| workspace_error(&e))?;
+    println!("Workspace: {}", ws.root);
+    println!("Name: {}", ws.config.workspace.name);
+    println!("Created: {}", ws.config.workspace.created);
+    Ok(())
+}
+
+/// Show or set global configuration.
+fn cmd_config(action: Option<ConfigAction>) -> Result<(), (String, i32)> {
+    let mut global = GlobalConfig::load().map_err(|e| workspace_error(&e))?;
+
+    match action {
+        None | Some(ConfigAction::Show) => {
+            println!(
+                "config file: {}",
+                ss_workspace::global::config_path().map_err(|e| workspace_error(&e))?
+            );
+            match global.default_workspace() {
+                Some(path) => println!("default_workspace: {}", path),
+                None => println!("default_workspace: not set"),
+            }
+            println!("known workspaces:");
+            for ws in &global.workspaces {
+                println!("  {} = {}", ws.name, ws.path);
             }
         }
+        Some(ConfigAction::Set { key, value }) => match key.as_str() {
+            "default_workspace" => {
+                let expanded = ss_workspace::expand_tilde(&value);
+                global.set_default_workspace(&expanded);
+                global.save().map_err(|e| workspace_error(&e))?;
+                println!(
+                    "Set default_workspace to {}",
+                    global.default_workspace().unwrap()
+                );
+            }
+            _ => {
+                return Err((
+                    format!("Unknown config key: {}", key),
+                    exit_code::NOT_A_WORKSPACE,
+                ));
+            }
+        },
+    }
+    Ok(())
+}
+
+/// Check workspace health.
+fn cmd_check(fix: bool, workspace: Option<&str>) -> Result<(), (String, i32)> {
+    let global = GlobalConfig::load().map_err(|e| workspace_error(&e))?;
+
+    let stale = global.verify_workspaces();
+    if stale.is_empty() {
+        println!("All workspace entries are valid.");
+    } else {
+        for ws in &stale {
+            println!("Stale: {} at {} (path no longer exists)", ws.name, ws.path);
+        }
+
+        if fix {
+            let mut global = global;
+            let removed = global.remove_stale();
+            global.save().map_err(|e| workspace_error(&e))?;
+            println!("Removed {} stale entr(ies).", removed);
+        }
+    }
+
+    // Try to resolve the current workspace
+    if let Ok(ws) = Workspace::resolve(workspace) {
+        println!(
+            "Current workspace: {} ({})",
+            ws.config.workspace.name, ws.root
+        );
     }
 
     Ok(())
 }
 
-fn resolve_target_workspace(
-    _source_ws: &Workspace,
-    target: &str,
-) -> Result<Workspace, WorkspaceError> {
-    // If target is an absolute or relative path that exists as a workspace, use it.
-    if let Ok(target_path) = Utf8PathBuf::from_path_buf(expand_tilde(target)) {
-        if target_path.join(ss_workspace::CONFIG_FILE).exists() {
-            return Workspace::load(&target_path);
-        }
-        if target_path.is_absolute() {
-            return Err(WorkspaceError::NotAWorkspace);
-        }
-    }
-
-    // Otherwise, treat it as a workspace name under the configured default root.
-    let global = GlobalConfig::load()?;
-    let root = global.default_root().ok_or(WorkspaceError::NoDefaultRoot)?;
-    Workspace::load(root.join(target))
-}
-
-fn resolve_new_target(
-    path: Option<Utf8PathBuf>,
-    name: Option<String>,
-) -> Result<Utf8PathBuf, WorkspaceError> {
+/// Stub for not-yet-implemented commands.
+fn stub(cmd: &str, path: Option<&str>) -> Result<(), (String, i32)> {
     if let Some(p) = path {
-        return Ok(expand_tilde_utf8(&p)?);
+        println!("{}: {} (not implemented yet)", cmd, p);
+    } else {
+        println!("{} (not implemented yet)", cmd);
     }
-
-    if let Some(name) = name {
-        let global = GlobalConfig::load()?;
-        let root = global.default_root().ok_or(WorkspaceError::NoDefaultRoot)?;
-        return Ok(root.join(name));
-    }
-
-    // Default: create in current directory.
-    current_dir()
+    Ok(())
 }
 
-fn current_dir() -> Result<Utf8PathBuf, WorkspaceError> {
-    let cwd = std::env::current_dir()?;
-    Utf8PathBuf::from_path_buf(cwd).map_err(|p| {
-        WorkspaceError::Io(std::io::Error::new(
-            std::io::ErrorKind::InvalidData,
-            format!("current directory is not valid UTF-8: {:?}", p),
-        ))
-    })
-}
-
-fn expand_tilde(path: &str) -> PathBuf {
-    if let Some(rest) = path.strip_prefix("~/") {
-        if let Some(home) = dirs::home_dir() {
-            return home.join(rest);
-        }
-    }
-    PathBuf::from(path)
-}
-
-fn expand_tilde_utf8(path: &Utf8PathBuf) -> Result<Utf8PathBuf, WorkspaceError> {
-    let expanded = expand_tilde(path.as_str());
-    Utf8PathBuf::from_path_buf(expanded).map_err(|p| {
-        WorkspaceError::Io(std::io::Error::new(
-            std::io::ErrorKind::InvalidData,
-            format!("expanded path is not valid UTF-8: {:?}", p),
-        ))
-    })
+fn stub_no_path(cmd: &str) -> Result<(), (String, i32)> {
+    println!("{} (not implemented yet)", cmd);
+    Ok(())
 }

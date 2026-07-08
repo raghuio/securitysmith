@@ -903,7 +903,10 @@ mod tests {
     #[test]
     fn test_create_and_get_finding() {
         let conn = test_conn();
-        let cid = do_create_client(&conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None).unwrap();
+        let cid = do_create_client(
+            &conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None,
+        )
+        .unwrap();
         let eid = do_create_engagement(&conn, &make_engagement_input(cid, "Q1")).unwrap();
 
         let input = make_minimal_finding_input(eid, "SQL Injection");
@@ -929,7 +932,10 @@ mod tests {
     #[test]
     fn test_invalid_severity() {
         let conn = test_conn();
-        let cid = do_create_client(&conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None).unwrap();
+        let cid = do_create_client(
+            &conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None,
+        )
+        .unwrap();
         let eid = do_create_engagement(&conn, &make_engagement_input(cid, "Q1")).unwrap();
 
         let mut input = make_minimal_finding_input(eid, "Bad");
@@ -942,7 +948,10 @@ mod tests {
     #[test]
     fn test_update_finding_status() {
         let conn = test_conn();
-        let cid = do_create_client(&conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None).unwrap();
+        let cid = do_create_client(
+            &conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None,
+        )
+        .unwrap();
         let eid = do_create_engagement(&conn, &make_engagement_input(cid, "Q1")).unwrap();
 
         let input = make_minimal_finding_input(eid, "XSS");
@@ -956,7 +965,10 @@ mod tests {
     #[test]
     fn test_duplicate_finding() {
         let conn = test_conn();
-        let cid = do_create_client(&conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None).unwrap();
+        let cid = do_create_client(
+            &conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None,
+        )
+        .unwrap();
         let eid = do_create_engagement(&conn, &make_engagement_input(cid, "Q1")).unwrap();
 
         let input = make_minimal_finding_input(eid, "CSRF");
@@ -971,7 +983,10 @@ mod tests {
     #[test]
     fn test_archive_hides_from_list() {
         let conn = test_conn();
-        let cid = do_create_client(&conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None).unwrap();
+        let cid = do_create_client(
+            &conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None,
+        )
+        .unwrap();
         let eid = do_create_engagement(&conn, &make_engagement_input(cid, "Q1")).unwrap();
 
         let input = make_minimal_finding_input(eid, "LFI");
@@ -988,7 +1003,10 @@ mod tests {
     #[test]
     fn test_search_and_filter() {
         let conn = test_conn();
-        let cid = do_create_client(&conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None).unwrap();
+        let cid = do_create_client(
+            &conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None,
+        )
+        .unwrap();
         let eid = do_create_engagement(&conn, &make_engagement_input(cid, "Q1")).unwrap();
 
         let mut input1 = make_minimal_finding_input(eid, "SQL Injection");
@@ -1023,7 +1041,10 @@ mod tests {
     #[test]
     fn test_pagination() {
         let conn = test_conn();
-        let cid = do_create_client(&conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None).unwrap();
+        let cid = do_create_client(
+            &conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None,
+        )
+        .unwrap();
         let eid = do_create_engagement(&conn, &make_engagement_input(cid, "Q1")).unwrap();
 
         for i in 0..5 {
@@ -1048,7 +1069,10 @@ mod tests {
     #[test]
     fn test_audit_snapshots() {
         let conn = test_conn();
-        let cid = do_create_client(&conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None).unwrap();
+        let cid = do_create_client(
+            &conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None,
+        )
+        .unwrap();
         let eid = do_create_engagement(&conn, &make_engagement_input(cid, "Q1")).unwrap();
 
         let input = make_minimal_finding_input(eid, "Audit Test");
@@ -1080,7 +1104,10 @@ mod tests {
     #[test]
     fn test_get_finding_counts() {
         let conn = test_conn();
-        let cid = do_create_client(&conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None).unwrap();
+        let cid = do_create_client(
+            &conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None,
+        )
+        .unwrap();
         let eid = do_create_engagement(&conn, &make_engagement_input(cid, "Q1")).unwrap();
 
         let mut input1 = make_minimal_finding_input(eid, "Critical XSS");

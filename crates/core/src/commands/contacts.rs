@@ -59,13 +59,17 @@ fn validate_contact(input: &ContactInput) -> crate::error::Result<()> {
         return Err(AppError::Validation("Name is required.".to_string()));
     }
     if input.name.len() > 255 {
-        return Err(AppError::Validation("Name must be 255 characters or fewer.".to_string()));
+        return Err(AppError::Validation(
+            "Name must be 255 characters or fewer.".to_string(),
+        ));
     }
     if input.email.trim().is_empty() {
         return Err(AppError::Validation("Email is required.".to_string()));
     }
     if input.email.len() > 255 {
-        return Err(AppError::Validation("Email must be 255 characters or fewer.".to_string()));
+        return Err(AppError::Validation(
+            "Email must be 255 characters or fewer.".to_string(),
+        ));
     }
     validate_role(&input.role)?;
     Ok(())
@@ -165,7 +169,11 @@ pub fn do_create_contact(conn: &Connection, input: &ContactInput) -> crate::erro
 }
 
 #[must_use]
-pub fn do_update_contact(conn: &Connection, id: u32, input: &ContactInput) -> crate::error::Result<()> {
+pub fn do_update_contact(
+    conn: &Connection,
+    id: u32,
+    input: &ContactInput,
+) -> crate::error::Result<()> {
     validate_contact(input)?;
     let old = do_get_contact(conn, id)?;
 
@@ -278,10 +286,9 @@ pub fn delete_contact(state: State<AppState>, id: u32) -> Result<(), String> {
 
 #[cfg(test)]
 mod tests {
-    use crate::test_helpers::test_conn;
     use super::*;
     use crate::db;
-
+    use crate::test_helpers::test_conn;
 
     #[test]
     fn test_contact_crud() {

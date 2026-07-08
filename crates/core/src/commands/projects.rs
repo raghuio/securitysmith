@@ -72,18 +72,27 @@ pub fn do_create_project(
     tags: Option<&Vec<String>>,
     notes: Option<&str>,
 ) -> crate::error::Result<u32> {
-    let ts_json = serde_json::to_string(&tech_stack.cloned().unwrap_or_default())
-        .map_err(AppError::from)?;
-    let tags_json = serde_json::to_string(&tags.cloned().unwrap_or_default())
-        .map_err(AppError::from)?;
+    let ts_json =
+        serde_json::to_string(&tech_stack.cloned().unwrap_or_default()).map_err(AppError::from)?;
+    let tags_json =
+        serde_json::to_string(&tags.cloned().unwrap_or_default()).map_err(AppError::from)?;
 
     conn.execute(
         "INSERT INTO projects (client_id, name, description, status, start_date, end_date,
                                budgeted_hours, tech_stack, tentative_dates, tags, notes, updated_at)
          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, strftime('%s', 'now'))",
         params![
-            client_id, name, description, status, start_date, end_date,
-            budgeted_hours, ts_json, tentative_dates, tags_json, notes,
+            client_id,
+            name,
+            description,
+            status,
+            start_date,
+            end_date,
+            budgeted_hours,
+            ts_json,
+            tentative_dates,
+            tags_json,
+            notes,
         ],
     )
     .map_err(AppError::from)?;
@@ -94,8 +103,7 @@ pub fn do_create_project(
         .map_err(|_| AppError::Generic("ID overflow".to_string()))?;
 
     let new_project = do_get_project(conn, id).map_err(|e| e.to_string())?;
-    let new_json = serde_json::to_string(&new_project)
-        .map_err(AppError::from)?;
+    let new_json = serde_json::to_string(&new_project).map_err(AppError::from)?;
 
     conn.execute(
         "INSERT INTO audit_log (table_name, action, record_id, old_value, new_value, context)
@@ -182,8 +190,17 @@ fn do_update_project(
             notes = ?10, updated_at = strftime('%s', 'now')
          WHERE id = ?11",
         params![
-            update_name, update_desc, update_status, update_start, update_end,
-            update_budget, ts_json, update_tentative, tags_json, update_notes, id,
+            update_name,
+            update_desc,
+            update_status,
+            update_start,
+            update_end,
+            update_budget,
+            ts_json,
+            update_tentative,
+            tags_json,
+            update_notes,
+            id,
         ],
     )
     .map_err(AppError::from)?;
@@ -196,7 +213,12 @@ fn do_update_project(
         "INSERT INTO audit_log (table_name, action, record_id, old_value, new_value, context)
          VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
         params![
-            "projects", "UPDATE", &id.to_string(), &old_json, &new_json, "update_project command"
+            "projects",
+            "UPDATE",
+            &id.to_string(),
+            &old_json,
+            &new_json,
+            "update_project command"
         ],
     )
     .map_err(AppError::from)?;
@@ -218,8 +240,12 @@ fn do_archive_project(conn: &Connection, id: u32) -> crate::error::Result<()> {
         "INSERT INTO audit_log (table_name, action, record_id, old_value, new_value, context)
          VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
         params![
-            "projects", "DELETE", &id.to_string(),
-            None::<&str>, None::<&str>, "archive_project command"
+            "projects",
+            "DELETE",
+            &id.to_string(),
+            None::<&str>,
+            None::<&str>,
+            "archive_project command"
         ],
     )
     .map_err(AppError::from)?;
@@ -251,7 +277,9 @@ fn do_list_projects(
 
     let results = if let Some(s) = search {
         let pattern = format!("%{}%", s.trim());
-        sql.push_str(" AND (p.name LIKE ?2 OR p.description LIKE ?2 OR p.tags LIKE ?2 OR p.notes LIKE ?2)");
+        sql.push_str(
+            " AND (p.name LIKE ?2 OR p.description LIKE ?2 OR p.tags LIKE ?2 OR p.notes LIKE ?2)",
+        );
         sql.push_str(" ORDER BY p.updated_at DESC");
         let mut stmt = conn.prepare(&sql).map_err(AppError::from)?;
         stmt.query_map(params![client_id, pattern], |row| {
@@ -313,17 +341,25 @@ fn do_search_projects(conn: &Connection, query: &str) -> crate::error::Result<Ve
 
 fn validate_name(name: &str) -> Result<(), AppError> {
     if name.trim().is_empty() {
-        return Err(AppError::Validation("Project name is required.".to_string()));
+        return Err(AppError::Validation(
+            "Project name is required.".to_string(),
+        ));
     }
     if name.len() > 255 {
-        return Err(AppError::Validation("Project name must be 255 characters or fewer.".to_string()));
+        return Err(AppError::Validation(
+            "Project name must be 255 characters or fewer.".to_string(),
+        ));
     }
     Ok(())
 }
 
 fn validate_dates(start: Option<&str>, end: Option<&str>) -> Result<(), AppError> {
-    if let (Some(s), Some(e)) = (start, end) && e < s {
-        return Err(AppError::Validation("End date cannot be before start date.".to_string()));
+    if let (Some(s), Some(e)) = (start, end)
+        && e < s
+    {
+        return Err(AppError::Validation(
+            "End date cannot be before start date.".to_string(),
+        ));
     }
     Ok(())
 }
@@ -357,9 +393,18 @@ pub fn create_project(
     let conn = vault.connection().map_err(|e| e.to_string())?;
 
     do_create_project(
-        conn, client_id, name.trim(), description.as_deref(), &status,
-        start_date.as_deref(), end_date.as_deref(), budgeted_hours,
-        tech_stack.as_ref(), tentative_dates.as_deref(), tags.as_ref(), notes.as_deref(),
+        conn,
+        client_id,
+        name.trim(),
+        description.as_deref(),
+        &status,
+        start_date.as_deref(),
+        end_date.as_deref(),
+        budgeted_hours,
+        tech_stack.as_ref(),
+        tentative_dates.as_deref(),
+        tags.as_ref(),
+        notes.as_deref(),
     )
     .map_err(|e| e.to_string())
 }
@@ -390,7 +435,9 @@ pub fn update_project(
     tags: Option<Vec<String>>,
     notes: Option<String>,
 ) -> Result<(), String> {
-    if let Some(ref n) = name { validate_name(n)?; }
+    if let Some(ref n) = name {
+        validate_name(n)?;
+    }
     validate_dates(start_date.as_deref(), end_date.as_deref())?;
 
     let mut vault = state
@@ -400,9 +447,18 @@ pub fn update_project(
     let conn = vault.connection().map_err(|e| e.to_string())?;
 
     do_update_project(
-        conn, id, name.as_deref(), description.as_deref(), status.as_deref(),
-        start_date.as_deref(), end_date.as_deref(), budgeted_hours,
-        tech_stack.as_ref(), tentative_dates.as_deref(), tags.as_ref(), notes.as_deref(),
+        conn,
+        id,
+        name.as_deref(),
+        description.as_deref(),
+        status.as_deref(),
+        start_date.as_deref(),
+        end_date.as_deref(),
+        budgeted_hours,
+        tech_stack.as_ref(),
+        tentative_dates.as_deref(),
+        tags.as_ref(),
+        notes.as_deref(),
     )
     .map_err(|e| e.to_string())
 }
@@ -451,22 +507,45 @@ pub fn search_projects(state: State<AppState>, query: String) -> Result<Vec<Proj
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::test_helpers::test_conn;
     use crate::commands::clients::do_create_client;
+    use crate::test_helpers::test_conn;
 
     #[test]
     fn test_create_and_get_project() {
         let conn = test_conn();
-        let cid = do_create_client(&conn, "Acme", "Acme Corp",
-            None, None, None, None, None, None, None, None, None, None, None
-        ).unwrap();
+        let cid = do_create_client(
+            &conn,
+            "Acme",
+            "Acme Corp",
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .unwrap();
 
         let pid = do_create_project(
-            &conn, cid, "Q3 Program",
-            Some("Desc"), "active", Some("2024-01-01"), Some("2024-12-31"),
-            Some(100), Some(&vec!["nginx".to_string(), "wordpress".to_string()]),
-            None, Some(&vec!["critical".to_string()]), None,
-        ).unwrap();
+            &conn,
+            cid,
+            "Q3 Program",
+            Some("Desc"),
+            "active",
+            Some("2024-01-01"),
+            Some("2024-12-31"),
+            Some(100),
+            Some(&vec!["nginx".to_string(), "wordpress".to_string()]),
+            None,
+            Some(&vec!["critical".to_string()]),
+            None,
+        )
+        .unwrap();
 
         let project = do_get_project(&conn, pid).unwrap();
         assert_eq!(project.name, "Q3 Program");
@@ -479,14 +558,31 @@ mod tests {
     #[test]
     fn test_list_projects_by_client() {
         let conn = test_conn();
-        let cid = do_create_client(&conn, "Acme", "Acme Corp",
-            None, None, None, None, None, None, None, None, None, None, None
-        ).unwrap();
-        do_create_project(&conn, cid, "P1", None, "active", None, None, None, None, None, None, None
-        ).unwrap();
+        let cid = do_create_client(
+            &conn,
+            "Acme",
+            "Acme Corp",
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .unwrap();
         do_create_project(
-            &conn, cid, "P2", None, "active", None, None, None, None, None, None, None
-        ).unwrap();
+            &conn, cid, "P1", None, "active", None, None, None, None, None, None, None,
+        )
+        .unwrap();
+        do_create_project(
+            &conn, cid, "P2", None, "active", None, None, None, None, None, None, None,
+        )
+        .unwrap();
 
         let list = do_list_projects(&conn, cid, None).unwrap();
         assert_eq!(list.len(), 2);
@@ -495,12 +591,27 @@ mod tests {
     #[test]
     fn test_archive_project() {
         let conn = test_conn();
-        let cid = do_create_client(&conn, "Acme", "Acme Corp",
-            None, None, None, None, None, None, None, None, None, None, None
-        ).unwrap();
+        let cid = do_create_client(
+            &conn,
+            "Acme",
+            "Acme Corp",
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .unwrap();
         let pid = do_create_project(
-            &conn, cid, "P1", None, "active", None, None, None, None, None, None, None
-        ).unwrap();
+            &conn, cid, "P1", None, "active", None, None, None, None, None, None, None,
+        )
+        .unwrap();
 
         do_archive_project(&conn, pid).unwrap();
         let result = do_get_project(&conn, pid);
@@ -510,16 +621,37 @@ mod tests {
     #[test]
     fn test_duplicate_project_name_rejected() {
         let conn = test_conn();
-        let cid = do_create_client(&conn, "Acme", "Acme Corp",
-            None, None, None, None, None, None, None, None, None, None, None
-        ).unwrap();
-        do_create_project(&conn, cid, "P1", None, "active", None, None, None, None, None, None, None
-        ).unwrap();
+        let cid = do_create_client(
+            &conn,
+            "Acme",
+            "Acme Corp",
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .unwrap();
+        do_create_project(
+            &conn, cid, "P1", None, "active", None, None, None, None, None, None, None,
+        )
+        .unwrap();
         let result = do_create_project(
-            &conn, cid, "P1", None, "active", None, None, None, None, None, None, None
+            &conn, cid, "P1", None, "active", None, None, None, None, None, None, None,
         );
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("UNIQUE constraint"));
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("UNIQUE constraint")
+        );
     }
 
     #[test]

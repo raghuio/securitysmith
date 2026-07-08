@@ -1,6 +1,6 @@
-use ss_core::state::AppState;
 use rusqlite::{Connection, OptionalExtension, params};
 use serde::{Deserialize, Serialize};
+use ss_core::state::AppState;
 use tauri::State;
 
 const VALID_CATEGORIES: [&str; 6] = [

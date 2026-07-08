@@ -1,6 +1,6 @@
-use ss_core::state::AppState;
 use rusqlite::{Connection, params};
 use serde::{Deserialize, Serialize};
+use ss_core::state::AppState;
 use tauri::State;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

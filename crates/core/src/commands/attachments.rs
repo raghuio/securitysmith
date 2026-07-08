@@ -86,7 +86,9 @@ fn validate_attachment(input: &AttachmentInput) -> crate::error::Result<()> {
         input.entity_type.as_str(),
         "finding" | "engagement" | "document"
     ) {
-        return Err(AppError::Generic("Invalid entity_type. Must be finding, engagement, or document.".to_string()));
+        return Err(AppError::Generic(
+            "Invalid entity_type. Must be finding, engagement, or document.".to_string(),
+        ));
     }
     Ok(())
 }
@@ -112,13 +114,11 @@ fn do_upload_attachment(
     let hash = hex::encode(Sha256::digest(&decoded));
     let safe_name = sanitize_filename(&input.filename);
     let entity_path = entity_dir(data_dir, &input.entity_type, input.entity_id);
-    std::fs::create_dir_all(&entity_path)
-        .map_err(AppError::from)?;
+    std::fs::create_dir_all(&entity_path).map_err(AppError::from)?;
 
     let unique_name = ensure_unique_filename(&entity_path, &safe_name);
     let file_path = entity_path.join(&unique_name);
-    std::fs::write(&file_path, &decoded)
-        .map_err(AppError::from)?;
+    std::fs::write(&file_path, &decoded).map_err(AppError::from)?;
 
     conn.execute(
         "INSERT INTO attachments (entity_type, entity_id, filename, original_name, mime_type, file_size, sha256, sort_order, updated_at)
@@ -255,14 +255,12 @@ fn do_read_attachment_file(
     filename: &str,
 ) -> crate::error::Result<Vec<u8>> {
     let path = entity_dir(data_dir, entity_type, entity_id).join(filename);
-    std::fs::read(&path).map_err(|e| AppError::Generic(format!("Failed to read attachment file: {e}")))
+    std::fs::read(&path)
+        .map_err(|e| AppError::Generic(format!("Failed to read attachment file: {e}")))
 }
 
 fn get_data_dir(app_handle: &AppHandle) -> Result<PathBuf, String> {
-    let data_dir = app_handle
-        .path()
-        .app_data_dir()
-        .map_err(AppError::from)?;
+    let data_dir = app_handle.path().app_data_dir().map_err(AppError::from)?;
     Ok(data_dir)
 }
 
@@ -399,8 +397,7 @@ pub fn get_attachment_thumbnail(
     let file_path = entity_dir(&data_dir, &entity_type, entity_id).join(&safe_filename);
     let bytes = std::fs::read(&file_path).map_err(AppError::from)?;
 
-    let thumb = generate_thumbnail(&bytes, 120)
-        .map_err(AppError::from)?;
+    let thumb = generate_thumbnail(&bytes, 120).map_err(AppError::from)?;
     Ok(general_purpose::STANDARD.encode(&thumb))
 }
 
@@ -424,10 +421,9 @@ fn generate_thumbnail(data: &[u8], max_dim: u32) -> Result<Vec<u8>, String> {
 
 #[cfg(test)]
 mod tests {
-    use crate::test_helpers::test_conn;
     use super::*;
     use crate::db;
-
+    use crate::test_helpers::test_conn;
 
     #[test]
     fn test_attachment_crud() {

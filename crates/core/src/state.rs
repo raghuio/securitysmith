@@ -6,10 +6,7 @@ use std::time::Instant;
 /// Vault connection state.
 pub enum VaultState {
     Locked,
-    Unlocked {
-        conn: Connection,
-        key: [u8; 32],
-    },
+    Unlocked { conn: Connection, key: [u8; 32] },
 }
 
 impl VaultState {

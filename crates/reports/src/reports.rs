@@ -1,8 +1,8 @@
-use ss_report_engine::{ReportData, generate_pdf};
-use ss_core::state::AppState;
 use rusqlite::OptionalExtension;
 use rusqlite::{Connection, params};
 use serde::Serialize;
+use ss_core::state::AppState;
+use ss_report_engine::{ReportData, generate_pdf};
 use tauri::State;
 
 #[derive(Serialize)]
@@ -300,11 +300,7 @@ pub fn generate_report_pdf(
         }
     }
 
-    let mut data = ReportData::new(
-        report.name,
-        report.client_name,
-        report.engagement_name,
-    );
+    let mut data = ReportData::new(report.name, report.client_name, report.engagement_name);
     data.set_executive_summary(report.executive_summary);
     data.set_appendix(report.appendix);
     data.set_finding_titles(finding_titles);

@@ -481,7 +481,10 @@ mod tests {
     #[test]
     fn test_create_and_get_credential() {
         let conn = test_conn();
-        let cid = do_create_client(&conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None).unwrap();
+        let cid = do_create_client(
+            &conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None,
+        )
+        .unwrap();
         let eid = do_create_engagement(&conn, &make_engagement_input(cid, "Q1")).unwrap();
 
         let input = make_cred_input(eid, "Admin login", "secret");
@@ -505,7 +508,10 @@ mod tests {
     #[test]
     fn test_gate_all_working() {
         let conn = test_conn();
-        let cid = do_create_client(&conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None).unwrap();
+        let cid = do_create_client(
+            &conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None,
+        )
+        .unwrap();
         let eid = do_create_engagement(&conn, &make_engagement_input(cid, "Q1")).unwrap();
 
         let id = do_create_credential(&conn, &make_cred_input(eid, "Admin", "s1")).unwrap();
@@ -547,7 +553,10 @@ mod tests {
     #[test]
     fn test_gate_one_expired_resets() {
         let conn = test_conn();
-        let cid = do_create_client(&conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None).unwrap();
+        let cid = do_create_client(
+            &conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None,
+        )
+        .unwrap();
         let eid = do_create_engagement(&conn, &make_engagement_input(cid, "Q1")).unwrap();
 
         let id1 = do_create_credential(&conn, &make_cred_input(eid, "Admin", "s1")).unwrap();
@@ -615,7 +624,10 @@ mod tests {
     #[test]
     fn test_delete_resets_gate() {
         let conn = test_conn();
-        let cid = do_create_client(&conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None).unwrap();
+        let cid = do_create_client(
+            &conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None,
+        )
+        .unwrap();
         let eid = do_create_engagement(&conn, &make_engagement_input(cid, "Q1")).unwrap();
 
         let id = do_create_credential(&conn, &make_cred_input(eid, "Admin", "s1")).unwrap();
@@ -656,7 +668,10 @@ mod tests {
     #[test]
     fn test_audit_excludes_value() {
         let conn = test_conn();
-        let cid = do_create_client(&conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None).unwrap();
+        let cid = do_create_client(
+            &conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None,
+        )
+        .unwrap();
         let eid = do_create_engagement(&conn, &make_engagement_input(cid, "Q1")).unwrap();
 
         let input = make_cred_input(eid, "Admin", "super-secret-value");
@@ -675,7 +690,10 @@ mod tests {
     #[test]
     fn test_value_too_large_rejected() {
         let conn = test_conn();
-        let cid = do_create_client(&conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None).unwrap();
+        let cid = do_create_client(
+            &conn, "Acme", "Acme", None, None, None, None, None, None, None, None, None, None, None,
+        )
+        .unwrap();
         let eid = do_create_engagement(&conn, &make_engagement_input(cid, "Q1")).unwrap();
 
         let mut input = make_cred_input(eid, "SSH", "x");

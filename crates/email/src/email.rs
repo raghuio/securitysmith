@@ -1,4 +1,3 @@
-use ss_core::state::AppState;
 use lettre::AsyncTransport;
 use lettre::message::header::ContentType;
 use lettre::message::{Attachment, MultiPart, SinglePart};
@@ -7,6 +6,7 @@ use lettre::{AsyncSmtpTransport, Message, Tokio1Executor};
 use rusqlite::OptionalExtension;
 use rusqlite::params;
 use serde::Serialize;
+use ss_core::state::AppState;
 use tauri::State;
 
 #[derive(Serialize)]
@@ -149,8 +149,8 @@ pub async fn send_email(
 
     let attachment_count = attachments.len();
     for path in &attachments {
-        let file_bytes = std::fs::read(path)
-            .map_err(|e| format!("Failed to read attachment {path}: {e}"))?;
+        let file_bytes =
+            std::fs::read(path).map_err(|e| format!("Failed to read attachment {path}: {e}"))?;
         let filename = std::path::Path::new(&path)
             .file_name()
             .and_then(|n| n.to_str())

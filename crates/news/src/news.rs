@@ -1,6 +1,6 @@
-use ss_core::state::AppState;
 use rusqlite::{Connection, OptionalExtension, params};
 use serde::Serialize;
+use ss_core::state::AppState;
 use std::collections::HashSet;
 use tauri::State;
 

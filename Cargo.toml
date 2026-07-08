@@ -13,9 +13,9 @@ members = [
     "crates/news",
     "crates/checklists",
     "crates/compliance",
-    "crates/time-tracking",
     "crates/email",
     "crates/workspace",
+    "crates/frontmatter",
     "crates/cli",
 ]
 
@@ -70,7 +70,13 @@ ss-calendar = { path = "crates/calendar", package = "securitysmith-calendar" }
 ss-news = { path = "crates/news", package = "securitysmith-news" }
 ss-checklists = { path = "crates/checklists", package = "securitysmith-checklists" }
 ss-compliance = { path = "crates/compliance", package = "securitysmith-compliance" }
-ss-time-tracking = { path = "crates/time-tracking", package = "securitysmith-time-tracking" }
 ss-email = { path = "crates/email", package = "securitysmith-email" }
 ss-workspace = { path = "crates/workspace", package = "securitysmith-workspace" }
+ss-frontmatter = { path = "crates/frontmatter", package = "securitysmith-frontmatter" }
 sm = { path = "crates/cli" }
+
+[profile.release]
+strip = true
+opt-level = "z"
+lto = true
+codegen-units = 1

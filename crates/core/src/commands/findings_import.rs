@@ -1,11 +1,11 @@
+use crate::error::AppError;
+use crate::state::AppState;
+use rusqlite::{Connection, OptionalExtension, params};
 use ss_parsers::{
     CsvColumnMapping, FindingParser, ImportPreview, ImportResult, ParsedFinding, burp::BurpParser,
     csv_import::CsvParser, nessus::NessusParser, nmap::NmapParser, nuclei::NucleiParser,
     zap::ZapJsonParser,
 };
-use crate::error::AppError;
-use crate::state::AppState;
-use rusqlite::{Connection, OptionalExtension, params};
 use tauri::State;
 
 const MAX_IMPORT_BYTES: u64 = 100 * 1024 * 1024;
@@ -135,14 +135,10 @@ fn do_commit_import(
     let mut imported = 0u32;
     let mut skipped = 0u32;
 
-    let eps_json = serde_json::to_string(&Vec::<&str>::new())
-        .map_err(AppError::from)?;
-    let impact_json = serde_json::to_string(&Vec::<&str>::new())
-        .map_err(AppError::from)?;
-    let _refs_json = serde_json::to_string(&Vec::<&str>::new())
-        .map_err(AppError::from)?;
-    let tags_json = serde_json::to_string(&Vec::<&str>::new())
-        .map_err(AppError::from)?;
+    let eps_json = serde_json::to_string(&Vec::<&str>::new()).map_err(AppError::from)?;
+    let impact_json = serde_json::to_string(&Vec::<&str>::new()).map_err(AppError::from)?;
+    let _refs_json = serde_json::to_string(&Vec::<&str>::new()).map_err(AppError::from)?;
+    let tags_json = serde_json::to_string(&Vec::<&str>::new()).map_err(AppError::from)?;
 
     let eps_empty = serde_json::to_string(&Vec::<&str>::new()).unwrap_or_default();
     let _impact_empty = eps_empty.clone();
@@ -154,14 +150,11 @@ fn do_commit_import(
             continue;
         }
 
-        let affected = serde_json::to_string(&pf.affected_endpoints)
-            .map_err(AppError::from)?;
+        let affected = serde_json::to_string(&pf.affected_endpoints).map_err(AppError::from)?;
         let evidence = eps_json.clone();
         let impact = impact_json.clone();
-        let remediation = serde_json::to_string(&pf.remediation_items)
-            .map_err(AppError::from)?;
-        let references = serde_json::to_string(&pf.references)
-            .map_err(AppError::from)?;
+        let remediation = serde_json::to_string(&pf.remediation_items).map_err(AppError::from)?;
+        let references = serde_json::to_string(&pf.references).map_err(AppError::from)?;
 
         conn.execute(
             "INSERT INTO findings (
@@ -243,12 +236,11 @@ pub fn commit_import(
 
 #[cfg(test)]
 mod tests {
-    use crate::test_helpers::test_conn;
     use super::*;
     use crate::db;
+    use crate::test_helpers::test_conn;
 
     #[allow(dead_code)]
-
     #[test]
     fn test_nessus_parsing() {
         let xml = r#"<?xml version="1.0"?>

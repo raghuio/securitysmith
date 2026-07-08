@@ -6,112 +6,112 @@ use thiserror::Error;
 pub enum AppError {
     #[error("Vault not unlocked")]
     VaultLocked,
-    
+
     #[error("Database error: {0}")]
     Database(#[from] rusqlite::Error),
-    
+
     #[error("Client not found (id={0})")]
     ClientNotFound(u32),
-    
+
     #[error("Engagement not found (id={0})")]
     EngagementNotFound(u32),
-    
+
     #[error("Finding not found (id={0})")]
     FindingNotFound(u32),
-    
+
     #[error("Credential not found (id={0})")]
     CredentialNotFound(u32),
-    
+
     #[error("Contact not found (id={0})")]
     ContactNotFound(u32),
-    
+
     #[error("Template not found (id={0})")]
     TemplateNotFound(u32),
-    
+
     #[error("Report not found (id={0})")]
     ReportNotFound(u32),
-    
+
     #[error("Document not found (id={0})")]
     DocumentNotFound(u32),
-    
+
     #[error("Invoice not found (id={0})")]
     InvoiceNotFound(u32),
-    
+
     #[error("Invalid input: {0}")]
     Validation(String),
-    
+
     #[error("Crypto error: {0}")]
     Crypto(String),
-    
+
     #[error("Internal state error")]
     StatePoisoned,
-    
+
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
-    
+
     #[error("Migration failed: {0}")]
     Migration(String),
-    
+
     #[error("Vault not initialized")]
     VaultNotInitialized,
-    
+
     #[error("Recovery not configured")]
     RecoveryNotConfigured,
-    
+
     #[error("Recovery phrase invalid")]
     InvalidRecoveryPhrase,
-    
+
     #[error("Rate limited: wait {0} seconds")]
     RateLimited(u64),
-    
+
     #[error("External service error: {0}")]
     ExternalService(String),
-    
+
     #[error("Password too weak: {0}")]
     WeakPassword(String),
-    
+
     #[error("Export failed: {0}")]
     Export(String),
-    
+
     #[error("Import failed: {0}")]
     Import(String),
-    
+
     #[error("Serialization error: {0}")]
     Serialization(#[from] serde_json::Error),
-    
+
     #[error("Zip error: {0}")]
     Zip(String),
-    
+
     #[error("CSV error: {0}")]
     Csv(String),
-    
+
     #[error("URL parse error: {0}")]
     UrlParse(String),
-    
+
     #[error("HTTP error: {0}")]
     Http(String),
-    
+
     #[error("Image error: {0}")]
     Image(String),
-    
+
     #[error("Password hash error: {0}")]
     PasswordHash(String),
-    
+
     #[error("Tauri error: {0}")]
     Tauri(String),
-    
+
     #[error("Encryption error: {0}")]
     Encryption(String),
-    
+
     #[error("Notification error: {0}")]
     Notification(String),
-    
+
     #[error("Search error: {0}")]
     Search(String),
-    
+
     #[error("Scope item not found (id={0})")]
     ScopeItemNotFound(u32),
-    
+
     #[error("Generic error: {0}")]
     Generic(String),
 }
@@ -179,7 +179,6 @@ pub type Result<T> = std::result::Result<T, AppError>;
 pub fn to_string(err: AppError) -> String {
     err.to_string()
 }
-
 
 impl From<AppError> for String {
     fn from(err: AppError) -> Self {

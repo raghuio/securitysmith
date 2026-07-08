@@ -59,13 +59,17 @@ fn validate_contact(input: &ProjectContactInput) -> crate::error::Result<()> {
         return Err(AppError::Validation("Name is required.".to_string()));
     }
     if input.name.len() > 255 {
-        return Err(AppError::Validation("Name must be 255 characters or fewer.".to_string()));
+        return Err(AppError::Validation(
+            "Name must be 255 characters or fewer.".to_string(),
+        ));
     }
     if input.email.trim().is_empty() {
         return Err(AppError::Validation("Email is required.".to_string()));
     }
     if input.email.len() > 255 {
-        return Err(AppError::Validation("Email must be 255 characters or fewer.".to_string()));
+        return Err(AppError::Validation(
+            "Email must be 255 characters or fewer.".to_string(),
+        ));
     }
     validate_role(&input.role)?;
     Ok(())
@@ -90,7 +94,10 @@ fn row_to_project_contact(row: &rusqlite::Row) -> Result<ProjectContact, rusqlit
 }
 
 #[must_use]
-pub fn do_list_project_contacts(conn: &Connection, project_id: u32) -> crate::error::Result<Vec<ProjectContact>> {
+pub fn do_list_project_contacts(
+    conn: &Connection,
+    project_id: u32,
+) -> crate::error::Result<Vec<ProjectContact>> {
     let mut stmt = conn
         .prepare(
             "SELECT id, project_id, name, email, phone, role, role_label, title, notes, is_primary, is_active, created_at, updated_at
@@ -122,7 +129,10 @@ pub fn do_get_project_contact(conn: &Connection, id: u32) -> crate::error::Resul
 }
 
 #[must_use]
-pub fn do_create_project_contact(conn: &Connection, input: &ProjectContactInput) -> crate::error::Result<u32> {
+pub fn do_create_project_contact(
+    conn: &Connection,
+    input: &ProjectContactInput,
+) -> crate::error::Result<u32> {
     validate_contact(input)?;
 
     if let Some(true) = input.is_primary {
@@ -165,7 +175,11 @@ pub fn do_create_project_contact(conn: &Connection, input: &ProjectContactInput)
 }
 
 #[must_use]
-pub fn do_update_project_contact(conn: &Connection, id: u32, input: &ProjectContactInput) -> crate::error::Result<()> {
+pub fn do_update_project_contact(
+    conn: &Connection,
+    id: u32,
+    input: &ProjectContactInput,
+) -> crate::error::Result<()> {
     validate_contact(input)?;
     let old = do_get_project_contact(conn, id)?;
 
@@ -226,7 +240,10 @@ pub fn do_delete_project_contact(conn: &Connection, id: u32) -> crate::error::Re
 // Tauri commands
 #[tauri::command]
 /// List contacts for a client.
-pub fn list_project_contacts(state: State<AppState>, project_id: u32) -> Result<Vec<ProjectContact>, String> {
+pub fn list_project_contacts(
+    state: State<AppState>,
+    project_id: u32,
+) -> Result<Vec<ProjectContact>, String> {
     let mut vault = state
         .vault
         .lock()
@@ -247,7 +264,10 @@ pub fn get_project_contact(state: State<AppState>, id: u32) -> Result<ProjectCon
 
 #[tauri::command]
 /// Create a new client contact.
-pub fn create_project_contact(state: State<AppState>, input: ProjectContactInput) -> Result<u32, String> {
+pub fn create_project_contact(
+    state: State<AppState>,
+    input: ProjectContactInput,
+) -> Result<u32, String> {
     let mut vault = state
         .vault
         .lock()
@@ -257,7 +277,11 @@ pub fn create_project_contact(state: State<AppState>, input: ProjectContactInput
 }
 
 #[tauri::command]
-pub fn update_project_contact(state: State<AppState>, id: u32, input: ProjectContactInput) -> Result<(), String> {
+pub fn update_project_contact(
+    state: State<AppState>,
+    id: u32,
+    input: ProjectContactInput,
+) -> Result<(), String> {
     let mut vault = state
         .vault
         .lock()
@@ -278,10 +302,9 @@ pub fn delete_project_contact(state: State<AppState>, id: u32) -> Result<(), Str
 
 #[cfg(test)]
 mod tests {
-    use crate::test_helpers::test_conn;
     use super::*;
     use crate::db;
-
+    use crate::test_helpers::test_conn;
 
     #[test]
     fn test_contact_crud() {
@@ -297,7 +320,8 @@ mod tests {
             "INSERT INTO projects (client_id, name, status, is_active, created_at, updated_at)
              VALUES (?1, 'Test Project', 'active', 1, strftime('%s','now'), strftime('%s','now'))",
             params![1],
-        ).unwrap();
+        )
+        .unwrap();
         let input = ProjectContactInput {
             project_id: 1,
             name: "Jane Doe".to_string(),

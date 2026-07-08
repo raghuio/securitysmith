@@ -147,7 +147,8 @@ pub fn get_boot_theme(state: State<AppState>) -> Result<String, String> {
 /// Validates the URL scheme and performs a lightweight GET to `/api/tags`.
 #[tauri::command]
 pub async fn test_ollama_connection(url: String) -> Result<bool, String> {
-    let parsed = reqwest::Url::parse(&url).map_err(|e| AppError::Generic(format!("Invalid URL: {e}")))?;
+    let parsed =
+        reqwest::Url::parse(&url).map_err(|e| AppError::Generic(format!("Invalid URL: {e}")))?;
 
     if parsed.scheme() != "http" && parsed.scheme() != "https" {
         return Err("URL must use http or https scheme".to_string());
@@ -162,11 +163,7 @@ pub async fn test_ollama_connection(url: String) -> Result<bool, String> {
         .build()
         .map_err(AppError::from)?;
 
-    let resp = client
-        .get(api_url)
-        .send()
-        .await
-        .map_err(AppError::from)?;
+    let resp = client.get(api_url).send().await.map_err(AppError::from)?;
 
     Ok(resp.status().is_success())
 }

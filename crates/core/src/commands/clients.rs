@@ -106,8 +106,8 @@ pub fn do_create_client(
     tags: Option<&Vec<String>>,
     notes: Option<&str>,
 ) -> crate::error::Result<u32> {
-    let tags_json = serde_json::to_string(&tags.cloned().unwrap_or_default())
-        .map_err(AppError::from)?;
+    let tags_json =
+        serde_json::to_string(&tags.cloned().unwrap_or_default()).map_err(AppError::from)?;
 
     conn.execute(
         "INSERT INTO clients (short_name, registered_business_name, country, address, email, contact_number, business_tier, priority, status, tax_info, logo_attachment_id, notes, tags, updated_at)
@@ -125,8 +125,7 @@ pub fn do_create_client(
         .try_into()
         .map_err(|_| AppError::Generic("ID overflow".to_string()))?;
     let new_client = do_get_client(conn, id).map_err(|e| e.to_string())?;
-    let new_json = serde_json::to_string(&new_client)
-        .map_err(AppError::from)?;
+    let new_json = serde_json::to_string(&new_client).map_err(AppError::from)?;
 
     conn.execute(
         "INSERT INTO audit_log (table_name, action, record_id, old_value, new_value, context)
@@ -165,11 +164,14 @@ fn do_get_client(conn: &Connection, id: u32) -> Result<Client, AppError> {
     client.ok_or(AppError::ClientNotFound(id))
 }
 
-fn do_get_client_history(conn: &Connection, client_id: u32) -> crate::error::Result<Vec<ClientHistoryEntry>> {
+fn do_get_client_history(
+    conn: &Connection,
+    client_id: u32,
+) -> crate::error::Result<Vec<ClientHistoryEntry>> {
     let mut stmt = conn
         .prepare(
             "SELECT id, client_id, field_name, old_value, new_value, changed_at, changed_by
-             FROM client_history WHERE client_id = ?1 ORDER BY changed_at DESC"
+             FROM client_history WHERE client_id = ?1 ORDER BY changed_at DESC",
         )
         .map_err(AppError::from)?;
     let rows: Vec<ClientHistoryEntry> = stmt
@@ -241,8 +243,7 @@ fn do_update_client(
     let update_logo = logo_attachment_id.or(old.logo_attachment_id);
     let update_notes = notes.or(old.notes.as_deref());
     let update_tags = tags.cloned().unwrap_or(old.tags.clone());
-    let tags_json = serde_json::to_string(&update_tags)
-        .map_err(AppError::from)?;
+    let tags_json = serde_json::to_string(&update_tags).map_err(AppError::from)?;
 
     conn.execute(
         "UPDATE clients SET
@@ -262,9 +263,20 @@ fn do_update_client(
             updated_at = strftime('%s', 'now')
          WHERE id = ?14",
         params![
-            update_short, update_registered, update_country, update_address,
-            update_email, update_contact, update_tier, update_priority,
-            update_status, update_tax, update_logo, update_notes, tags_json, id
+            update_short,
+            update_registered,
+            update_country,
+            update_address,
+            update_email,
+            update_contact,
+            update_tier,
+            update_priority,
+            update_status,
+            update_tax,
+            update_logo,
+            update_notes,
+            tags_json,
+            id
         ],
     )
     .map_err(AppError::from)?;
@@ -272,12 +284,24 @@ fn do_update_client(
     // Write field-level history for changed fields
     if let Some(s) = short_name {
         if s != &old.short_name {
-            write_client_history(conn, id, "short_name", Some(old.short_name.as_str()), Some(s))?;
+            write_client_history(
+                conn,
+                id,
+                "short_name",
+                Some(old.short_name.as_str()),
+                Some(s),
+            )?;
         }
     }
     if let Some(s) = registered_business_name {
         if s != &old.registered_business_name {
-            write_client_history(conn, id, "registered_business_name", Some(old.registered_business_name.as_str()), Some(s))?;
+            write_client_history(
+                conn,
+                id,
+                "registered_business_name",
+                Some(old.registered_business_name.as_str()),
+                Some(s),
+            )?;
         }
     }
     if let Some(s) = country {
@@ -297,12 +321,24 @@ fn do_update_client(
     }
     if let Some(s) = contact_number {
         if Some(s) != old.contact_number.as_deref() {
-            write_client_history(conn, id, "contact_number", old.contact_number.as_deref(), Some(s))?;
+            write_client_history(
+                conn,
+                id,
+                "contact_number",
+                old.contact_number.as_deref(),
+                Some(s),
+            )?;
         }
     }
     if let Some(s) = business_tier {
         if Some(s) != old.business_tier.as_deref() {
-            write_client_history(conn, id, "business_tier", old.business_tier.as_deref(), Some(s))?;
+            write_client_history(
+                conn,
+                id,
+                "business_tier",
+                old.business_tier.as_deref(),
+                Some(s),
+            )?;
         }
     }
     if let Some(s) = priority {
@@ -322,9 +358,11 @@ fn do_update_client(
     }
     if logo_attachment_id != old.logo_attachment_id {
         write_client_history(
-            conn, id, "logo_attachment_id",
+            conn,
+            id,
+            "logo_attachment_id",
             old.logo_attachment_id.map(|v| v.to_string()).as_deref(),
-            logo_attachment_id.map(|v| v.to_string()).as_deref()
+            logo_attachment_id.map(|v| v.to_string()).as_deref(),
         )?;
     }
     if let Some(s) = notes {
@@ -333,11 +371,9 @@ fn do_update_client(
         }
     }
 
-    let old_json = serde_json::to_string(&old)
-        .map_err(AppError::from)?;
+    let old_json = serde_json::to_string(&old).map_err(AppError::from)?;
     let new_client = do_get_client(conn, id).map_err(|e| e.to_string())?;
-    let new_json = serde_json::to_string(&new_client)
-        .map_err(AppError::from)?;
+    let new_json = serde_json::to_string(&new_client).map_err(AppError::from)?;
 
     conn.execute(
         "INSERT INTO audit_log (table_name, action, record_id, old_value, new_value, context)
@@ -381,8 +417,7 @@ fn do_delete_client(conn: &Connection, id: u32) -> crate::error::Result<()> {
     )
     .map_err(AppError::from)?;
 
-    let old_json = serde_json::to_string(&old)
-        .map_err(AppError::from)?;
+    let old_json = serde_json::to_string(&old).map_err(AppError::from)?;
     let new_json = serde_json::json!({
         "id": id,
         "is_active": 0
@@ -427,18 +462,14 @@ fn do_list_clients(conn: &Connection, search: Option<&str>) -> crate::error::Res
             " AND (short_name LIKE ?1 OR registered_business_name LIKE ?1 OR email LIKE ?1 OR country LIKE ?1 OR tags LIKE ?1)",
         );
         sql.push_str(" ORDER BY updated_at DESC");
-        let mut stmt = conn
-            .prepare(&sql)
-            .map_err(AppError::from)?;
+        let mut stmt = conn.prepare(&sql).map_err(AppError::from)?;
         stmt.query_map(params![pattern], row_to_client)
             .map_err(AppError::from)?
             .collect::<Result<Vec<_>, _>>()
             .map_err(AppError::from)?
     } else {
         sql.push_str(" ORDER BY updated_at DESC");
-        let mut stmt = conn
-            .prepare(&sql)
-            .map_err(AppError::from)?;
+        let mut stmt = conn.prepare(&sql).map_err(AppError::from)?;
         stmt.query_map([], row_to_client)
             .map_err(AppError::from)?
             .collect::<Result<Vec<_>, _>>()
@@ -497,62 +528,82 @@ fn do_get_dashboard_stats(conn: &Connection) -> crate::error::Result<DashboardSt
 
 fn validate_short_name(name: &str) -> Result<(), AppError> {
     if name.trim().is_empty() {
-        return Err(AppError::Validation("Client short name is required.".to_string()));
+        return Err(AppError::Validation(
+            "Client short name is required.".to_string(),
+        ));
     }
     if name.len() > 100 {
-        return Err(AppError::Validation("Client short name must be 100 characters or fewer.".to_string()));
+        return Err(AppError::Validation(
+            "Client short name must be 100 characters or fewer.".to_string(),
+        ));
     }
     Ok(())
 }
 
 fn validate_registered_name(name: &str) -> Result<(), AppError> {
     if name.trim().is_empty() {
-        return Err(AppError::Validation("Registered business name is required.".to_string()));
+        return Err(AppError::Validation(
+            "Registered business name is required.".to_string(),
+        ));
     }
     if name.len() > 255 {
-        return Err(AppError::Validation("Registered business name must be 255 characters or fewer.".to_string()));
+        return Err(AppError::Validation(
+            "Registered business name must be 255 characters or fewer.".to_string(),
+        ));
     }
     Ok(())
 }
 
 fn validate_email(email: &str) -> Result<(), AppError> {
     if !email.is_empty() && !is_valid_email(email) {
-        return Err(AppError::Validation("Email address is invalid.".to_string()));
+        return Err(AppError::Validation(
+            "Email address is invalid.".to_string(),
+        ));
     }
     Ok(())
 }
 
 fn validate_notes(notes: &str) -> Result<(), AppError> {
     if notes.len() > 10_000 {
-        return Err(AppError::Validation("Notes must be 10,000 characters or fewer.".to_string()));
+        return Err(AppError::Validation(
+            "Notes must be 10,000 characters or fewer.".to_string(),
+        ));
     }
     Ok(())
 }
 
 fn validate_country(country: &str) -> Result<(), AppError> {
     if country.len() > 100 {
-        return Err(AppError::Validation("Country must be 100 characters or fewer.".to_string()));
+        return Err(AppError::Validation(
+            "Country must be 100 characters or fewer.".to_string(),
+        ));
     }
     Ok(())
 }
 
 fn validate_address(address: &str) -> Result<(), AppError> {
     if address.len() > 2000 {
-        return Err(AppError::Validation("Address must be 2,000 characters or fewer.".to_string()));
+        return Err(AppError::Validation(
+            "Address must be 2,000 characters or fewer.".to_string(),
+        ));
     }
     Ok(())
 }
 
 fn validate_contact_number(phone: &str) -> Result<(), AppError> {
     if phone.len() > 50 {
-        return Err(AppError::Validation("Contact number must be 50 characters or fewer.".to_string()));
+        return Err(AppError::Validation(
+            "Contact number must be 50 characters or fewer.".to_string(),
+        ));
     }
     Ok(())
 }
 
 fn validate_tax_info(tax: &str) -> Result<(), AppError> {
     if tax.len() > 4000 {
-        return Err(AppError::Validation("Tax info must be 4,000 characters or fewer.".to_string()));
+        return Err(AppError::Validation(
+            "Tax info must be 4,000 characters or fewer.".to_string(),
+        ));
     }
     // Validate it's valid JSON (or empty)
     if !tax.is_empty() && tax != "{}" {
@@ -582,12 +633,24 @@ pub fn create_client(
 ) -> Result<u32, String> {
     validate_short_name(&short_name)?;
     validate_registered_name(&registered_business_name)?;
-    if let Some(ref e) = email { validate_email(e)?; }
-    if let Some(ref n) = notes { validate_notes(n)?; }
-    if let Some(ref c) = country { validate_country(c)?; }
-    if let Some(ref a) = address { validate_address(a)?; }
-    if let Some(ref p) = contact_number { validate_contact_number(p)?; }
-    if let Some(ref t) = tax_info { validate_tax_info(t)?; }
+    if let Some(ref e) = email {
+        validate_email(e)?;
+    }
+    if let Some(ref n) = notes {
+        validate_notes(n)?;
+    }
+    if let Some(ref c) = country {
+        validate_country(c)?;
+    }
+    if let Some(ref a) = address {
+        validate_address(a)?;
+    }
+    if let Some(ref p) = contact_number {
+        validate_contact_number(p)?;
+    }
+    if let Some(ref t) = tax_info {
+        validate_tax_info(t)?;
+    }
 
     let mut vault = state
         .vault
@@ -628,7 +691,10 @@ pub fn get_client(state: State<AppState>, id: u32) -> Result<Client, String> {
 
 #[tauri::command]
 /// Retrieve client field-level history.
-pub fn get_client_history(state: State<AppState>, client_id: u32) -> Result<Vec<ClientHistoryEntry>, String> {
+pub fn get_client_history(
+    state: State<AppState>,
+    client_id: u32,
+) -> Result<Vec<ClientHistoryEntry>, String> {
     let mut vault = state
         .vault
         .lock()
@@ -657,14 +723,30 @@ pub fn update_client(
     tags: Option<Vec<String>>,
     notes: Option<String>,
 ) -> Result<(), String> {
-    if let Some(ref n) = short_name { validate_short_name(n)?; }
-    if let Some(ref n) = registered_business_name { validate_registered_name(n)?; }
-    if let Some(ref e) = email { validate_email(e)?; }
-    if let Some(ref n) = notes { validate_notes(n)?; }
-    if let Some(ref c) = country { validate_country(c)?; }
-    if let Some(ref a) = address { validate_address(a)?; }
-    if let Some(ref p) = contact_number { validate_contact_number(p)?; }
-    if let Some(ref t) = tax_info { validate_tax_info(t)?; }
+    if let Some(ref n) = short_name {
+        validate_short_name(n)?;
+    }
+    if let Some(ref n) = registered_business_name {
+        validate_registered_name(n)?;
+    }
+    if let Some(ref e) = email {
+        validate_email(e)?;
+    }
+    if let Some(ref n) = notes {
+        validate_notes(n)?;
+    }
+    if let Some(ref c) = country {
+        validate_country(c)?;
+    }
+    if let Some(ref a) = address {
+        validate_address(a)?;
+    }
+    if let Some(ref p) = contact_number {
+        validate_contact_number(p)?;
+    }
+    if let Some(ref t) = tax_info {
+        validate_tax_info(t)?;
+    }
 
     let mut vault = state
         .vault
@@ -673,7 +755,8 @@ pub fn update_client(
     let conn = vault.connection().map_err(|e| e.to_string())?;
 
     do_update_client(
-        conn, id,
+        conn,
+        id,
         short_name.as_deref(),
         registered_business_name.as_deref(),
         country.as_deref(),
@@ -738,18 +821,24 @@ fn is_valid_email(email: &str) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use crate::test_helpers::test_conn;
     use super::*;
     use crate::db;
+    use crate::test_helpers::test_conn;
 
     #[test]
     fn test_create_and_get_client() {
         let conn = test_conn();
         let id = do_create_client(
             &conn,
-            "Acme", "Acme Corporation Pvt Ltd",
-            Some("India"), None, Some("acme@example.com"), Some("+91 99999 99999"),
-            Some("enterprise"), Some("high"), Some("active"),
+            "Acme",
+            "Acme Corporation Pvt Ltd",
+            Some("India"),
+            None,
+            Some("acme@example.com"),
+            Some("+91 99999 99999"),
+            Some("enterprise"),
+            Some("high"),
+            Some("active"),
             Some("{\"gst\":\"27AABCU9603R1ZX\",\"pan\":\"AABCU9603R\"}"),
             None,
             Some(&vec!["fintech".to_string()]),
@@ -769,24 +858,71 @@ mod tests {
     #[test]
     fn test_duplicate_short_name_rejected() {
         let conn = test_conn();
-        do_create_client(&conn, "Acme", "Acme Corp", None, None, None, None, None, None, None, None, None, None, None).unwrap();
-        let result = do_create_client(&conn, "Acme", "Acme Inc", None, None, None, None, None, None, None, None, None, None, None);
+        do_create_client(
+            &conn,
+            "Acme",
+            "Acme Corp",
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .unwrap();
+        let result = do_create_client(
+            &conn, "Acme", "Acme Inc", None, None, None, None, None, None, None, None, None, None,
+            None,
+        );
         assert!(result.is_err());
-        assert!(result.unwrap_err().to_string().contains("UNIQUE constraint"));
+        assert!(
+            result
+                .unwrap_err()
+                .to_string()
+                .contains("UNIQUE constraint")
+        );
     }
 
     #[test]
     fn test_duplicate_registered_name_allowed() {
         let conn = test_conn();
-        do_create_client(&conn, "Acme-US", "Acme LLC", None, None, None, None, None, None, None, None, None, None, None).unwrap();
-        let result = do_create_client(&conn, "Acme-IN", "Acme LLC", None, None, None, None, None, None, None, None, None, None, None);
+        do_create_client(
+            &conn, "Acme-US", "Acme LLC", None, None, None, None, None, None, None, None, None,
+            None, None,
+        )
+        .unwrap();
+        let result = do_create_client(
+            &conn, "Acme-IN", "Acme LLC", None, None, None, None, None, None, None, None, None,
+            None, None,
+        );
         assert!(result.is_ok());
     }
 
     #[test]
     fn test_soft_delete_and_list() {
         let conn = test_conn();
-        let id = do_create_client(&conn, "Acme", "Acme Corp", None, None, None, None, None, None, None, None, None, None, None).unwrap();
+        let id = do_create_client(
+            &conn,
+            "Acme",
+            "Acme Corp",
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .unwrap();
         let list = do_list_clients(&conn, None).unwrap();
         assert_eq!(list.len(), 1);
 
@@ -801,8 +937,40 @@ mod tests {
     #[test]
     fn test_search_clients() {
         let conn = test_conn();
-        do_create_client(&conn, "Acme", "Acme Corp", None, None, Some("a@b.com"), None, None, None, None, None, None, None, None).unwrap();
-        do_create_client(&conn, "Wayne", "Wayne Enterprises", None, None, None, None, None, None, None, None, None, None, None).unwrap();
+        do_create_client(
+            &conn,
+            "Acme",
+            "Acme Corp",
+            None,
+            None,
+            Some("a@b.com"),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .unwrap();
+        do_create_client(
+            &conn,
+            "Wayne",
+            "Wayne Enterprises",
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .unwrap();
 
         assert_eq!(do_list_clients(&conn, Some("Acme")).unwrap().len(), 1);
         assert_eq!(do_list_clients(&conn, Some("a@b")).unwrap().len(), 1);
@@ -817,7 +985,23 @@ mod tests {
         assert_eq!(stats.finding_count, 0);
         assert_eq!(stats.project_count, 0);
 
-        do_create_client(&conn, "Acme", "Acme Corp", None, None, None, None, None, None, None, None, None, None, None).unwrap();
+        do_create_client(
+            &conn,
+            "Acme",
+            "Acme Corp",
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .unwrap();
         let stats = do_get_dashboard_stats(&conn).unwrap();
         assert_eq!(stats.client_count, 1);
     }
@@ -826,14 +1010,41 @@ mod tests {
     fn test_update_client_with_history() {
         let conn = test_conn();
         let id = do_create_client(
-            &conn, "Acme", "Acme Corp",
-            Some("India"), None, Some("old@acme.com"), None, None, None, None, None, None, None, None
-        ).unwrap();
+            &conn,
+            "Acme",
+            "Acme Corp",
+            Some("India"),
+            None,
+            Some("old@acme.com"),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .unwrap();
 
         do_update_client(
-            &conn, id,
-            Some("Acme Inc"), None, Some("USA"), None, Some("new@acme.com"), None, None, Some("medium"), None, None, None, None, None
-        ).unwrap();
+            &conn,
+            id,
+            Some("Acme Inc"),
+            None,
+            Some("USA"),
+            None,
+            Some("new@acme.com"),
+            None,
+            None,
+            Some("medium"),
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .unwrap();
 
         let client = do_get_client(&conn, id).unwrap();
         assert_eq!(client.short_name, "Acme Inc");
@@ -855,10 +1066,42 @@ mod tests {
     #[test]
     fn test_update_client_no_history_on_unchanged_field() {
         let conn = test_conn();
-        let id = do_create_client(&conn, "Acme", "Acme Corp", None, None, None, None, None, None, None, None, None, None, None).unwrap();
+        let id = do_create_client(
+            &conn,
+            "Acme",
+            "Acme Corp",
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .unwrap();
 
-        do_update_client(&conn, id, Some("Acme"), None, None, None, None, None, None, None, None, None, None, None, None
-        ).unwrap();
+        do_update_client(
+            &conn,
+            id,
+            Some("Acme"),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .unwrap();
 
         let history = do_get_client_history(&conn, id).unwrap();
         // short_name was set to same value, so no history should be written for it
@@ -869,11 +1112,40 @@ mod tests {
     fn test_client_mutations_write_audit_snapshots() {
         let conn = test_conn();
         let id = do_create_client(
-            &conn, "Acme", "Acme Corp",
-            None, None, Some("old@acme.com"), None, None, None, None, None, None, None, None
-        ).unwrap();
-        do_update_client(&conn, id, Some("Acme Inc"), None, None, Some("new@acme.com"), None, None, None, None, None, None, None, None, None
-        ).unwrap();
+            &conn,
+            "Acme",
+            "Acme Corp",
+            None,
+            None,
+            Some("old@acme.com"),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .unwrap();
+        do_update_client(
+            &conn,
+            id,
+            Some("Acme Inc"),
+            None,
+            None,
+            Some("new@acme.com"),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .unwrap();
         do_delete_client(&conn, id).unwrap();
 
         let mut stmt = conn
