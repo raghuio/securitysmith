@@ -1,0 +1,62 @@
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.TH SM-DOCUMENT 1  "document " 
+.SH NAME
+document \- Manage custom documents (RoE, NDA, proposal, custom)
+.SH SYNOPSIS
+\fBdocument\fR [\fB\-\-title\fR] [\fB\-\-doc\-type\fR] [\fB\-\-finalize\fR] [\fB\-\-unlock\fR] [\fB\-\-export\fR] [\fB\-\-to\fR] [\fB\-h\fR|\fB\-\-help\fR] <\fIPATH_OR_ID\fR> 
+.SH DESCRIPTION
+Manage custom documents (RoE, NDA, proposal, custom)
+.SH OPTIONS
+.TP
+\fB\-\-title\fR \fI<TITLE>\fR
+Title for new document
+.TP
+\fB\-\-doc\-type\fR \fI<DOC_TYPE>\fR
+Document type (roe, nda, proposal, custom)
+.br
+
+.br
+\fIPossible values:\fR
+.RS 14
+.IP \(bu 2
+roe
+.IP \(bu 2
+nda
+.IP \(bu 2
+proposal
+.IP \(bu 2
+custom
+.RE
+.TP
+\fB\-\-finalize\fR
+Finalize document (set read\-only)
+.TP
+\fB\-\-unlock\fR
+Unlock document (revert to draft)
+.TP
+\fB\-\-export\fR \fI<EXPORT>\fR
+Export format (markdown, html, pdf, json)
+.br
+
+.br
+\fIPossible values:\fR
+.RS 14
+.IP \(bu 2
+markdown
+.IP \(bu 2
+html
+.IP \(bu 2
+pdf
+.IP \(bu 2
+json
+.RE
+.TP
+\fB\-\-to\fR \fI<TO>\fR
+Output path for export
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print help
+.TP
+<\fIPATH_OR_ID\fR>
+Client path, engagement path, or document ID

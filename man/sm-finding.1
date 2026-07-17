@@ -1,0 +1,101 @@
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.TH SM-FINDING 1  "finding " 
+.SH NAME
+finding \- Manage findings
+.SH SYNOPSIS
+\fBfinding\fR [\fB\-\-title\fR] [\fB\-\-status\fR] [\fB\-\-severity\fR] [\fB\-\-export\fR] [\fB\-\-to\fR] [\fB\-\-no\-template\fR] [\fB\-\-import\fR] [\fB\-\-import\-format\fR] [\fB\-\-title\-column\fR] [\fB\-\-severity\-column\fR] [\fB\-\-retest\-result\fR] [\fB\-\-client\-response\fR] [\fB\-\-fix\-deadline\fR] [\fB\-h\fR|\fB\-\-help\fR] <\fIPATH_OR_ID\fR> 
+.SH DESCRIPTION
+Manage findings
+.SH OPTIONS
+.TP
+\fB\-\-title\fR \fI<TITLE>\fR
+Title for new finding
+.TP
+\fB\-\-status\fR \fI<STATUS>\fR
+Update finding status
+.br
+
+.br
+\fIPossible values:\fR
+.RS 14
+.IP \(bu 2
+open
+.IP \(bu 2
+fixed
+.IP \(bu 2
+false_positive
+.IP \(bu 2
+not_applicable
+.IP \(bu 2
+risk_accepted
+.RE
+.TP
+\fB\-\-severity\fR \fI<SEVERITY>\fR
+Update finding severity
+.br
+
+.br
+\fIPossible values:\fR
+.RS 14
+.IP \(bu 2
+critical
+.IP \(bu 2
+high
+.IP \(bu 2
+medium
+.IP \(bu 2
+low
+.IP \(bu 2
+informational
+.RE
+.TP
+\fB\-\-export\fR \fI<EXPORT>\fR
+Export format (markdown, html, pdf, json)
+.br
+
+.br
+\fIPossible values:\fR
+.RS 14
+.IP \(bu 2
+markdown
+.IP \(bu 2
+html
+.IP \(bu 2
+pdf
+.IP \(bu 2
+json
+.RE
+.TP
+\fB\-\-to\fR \fI<TO>\fR
+Output path for export
+.TP
+\fB\-\-no\-template\fR
+Skip template
+.TP
+\fB\-\-import\fR \fI<IMPORT>\fR
+Import findings from a file
+.TP
+\fB\-\-import\-format\fR \fI<IMPORT_FORMAT>\fR
+Import format (nessus, csv)
+.TP
+\fB\-\-title\-column\fR \fI<TITLE_COLUMN>\fR
+CSV title column index (0\-based)
+.TP
+\fB\-\-severity\-column\fR \fI<SEVERITY_COLUMN>\fR
+CSV severity column index (0\-based)
+.TP
+\fB\-\-retest\-result\fR \fI<RETEST_RESULT>\fR
+Update retest result (not_tested, pass, fail, partial)
+.TP
+\fB\-\-client\-response\fR \fI<CLIENT_RESPONSE>\fR
+Update client response (acknowledged, in_progress, fixed, accepted_risk, disputed, deferred, no_response)
+.TP
+\fB\-\-fix\-deadline\fR \fI<FIX_DEADLINE>\fR
+Set fix deadline (YYYY\-MM\-DD or \*(Aqauto\*(Aq to calculate from severity)
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print help
+.TP
+<\fIPATH_OR_ID\fR>
+Engagement path or finding ID

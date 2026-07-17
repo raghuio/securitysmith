@@ -1,0 +1,9 @@
+version = 1
+
+[engagement]
+type = "assessment"
+status = "draft"
+start_date = ""
+end_date = ""
+credentials_ready = false
+original_engagement = ""

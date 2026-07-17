@@ -1,4 +1,3 @@
-#![allow(dead_code)]
 // error.rs — Typed errors with exit-code mapping per spec.
 use std::process::exit;
 
@@ -14,7 +13,7 @@ pub mod exit_code {
     pub const INVALID_STATUS_SEVERITY: i32 = 8;
     pub const REPORT_FAILED: i32 = 9;
     pub const SOW_FAILED: i32 = 10;
-    pub const FORCE_FLAG_MISSING: i32 = 11;
+    pub const REMOVAL_DECLINED: i32 = 11;
     pub const INVALID_NAME_FORMAT: i32 = 12;
     pub const RESERVED_NAME: i32 = 13;
 }
@@ -56,8 +55,16 @@ pub fn workspace_error(e: &ss_workspace::WorkspaceError) -> (String, i32) {
             format!("Name `{}` is reserved.", name),
             exit_code::RESERVED_NAME,
         ),
+        MissingField(msg) => (msg.clone(), exit_code::MISSING_REQUIRED_FIELD),
+        InvalidDate(msg) => (msg.clone(), exit_code::INVALID_DATE),
+        InvalidStatusSeverity(msg) => (msg.clone(), exit_code::INVALID_STATUS_SEVERITY),
         Io(e) => (format!("IO error: {}", e), 1),
         Serialize(e) => (format!("TOML serialization error: {}", e), exit_code::INVALID_TOML),
         Deserialize(e) => (format!("TOML deserialization error: {}", e), exit_code::INVALID_TOML),
+        Frontmatter(e) => (format!("Frontmatter error: {}", e), exit_code::INVALID_FRONTMATTER),
+        SymlinkEscape(path) => (
+            format!("Symlink escapes the workspace: {}", path),
+            exit_code::INVALID_NAME_FORMAT,
+        ),
     }
 }

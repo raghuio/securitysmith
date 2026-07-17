@@ -1,0 +1,31 @@
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.TH SM-CHECKLIST 1  "checklist " 
+.SH NAME
+checklist \- Manage methodology checklists
+.SH SYNOPSIS
+\fBchecklist\fR [\fB\-\-assign\fR] [\fB\-\-list\fR] [\fB\-\-item\fR] [\fB\-\-status\fR] [\fB\-\-finding\fR] [\fB\-h\fR|\fB\-\-help\fR] <\fIPATH\fR> 
+.SH DESCRIPTION
+Manage methodology checklists
+.SH OPTIONS
+.TP
+\fB\-\-assign\fR \fI<ASSIGN>\fR
+Assign a built\-in checklist (e.g., owasp\-wstg)
+.TP
+\fB\-\-list\fR
+List items with status and coverage
+.TP
+\fB\-\-item\fR \fI<ITEM>\fR
+Checklist item ID to update
+.TP
+\fB\-\-status\fR \fI<STATUS>\fR
+Update item status
+.TP
+\fB\-\-finding\fR \fI<FINDING>\fR
+Link a finding ID to an item
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print help
+.TP
+<\fIPATH\fR>
+Engagement path

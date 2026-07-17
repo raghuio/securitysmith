@@ -1,75 +1,34 @@
 # SecuritySmith
 
-SecuritySmith is a command-line tool for security consultants and penetration testers to manage client work using plain-text files.
+A command-line tool for security consultants and penetration testers to manage client work using markdown files.
 
-> ⚠️ Work in progress. Features are being rebuilt, and very unstable. The codebase is not yet ready for production use.
+All data lives in the filesystem as Markdown and TOML files. No database, no UI, no network calls, no telemetry.
 
-## What it is today
+> **Warning:** This project is under active development and is not ready for production use. Feedbacks are welcome.
 
-A single Rust binary named `sm` that creates and manages a local workspace of files:
+## Install
 
-- **TOML** for configuration and structured metadata
-- **Markdown with YAML frontmatter** for notes and content
-- **Filesystem directories** for the client → project → engagement hierarchy
-
-Everything is stored locally and is git-friendly.
-
-## What is implemented
-
-- `sm new [path]` — create a workspace
-- `sm here` — show the current workspace
-- `sm config` / `sm config set` — manage global configuration
-- `sm client add|list|rm|rename|move` — manage clients
-
-## Build
-
-```bash
-cargo build --release
+```sh
+./scripts/build.sh --install
 ```
 
-The `sm` binary is produced in `target/release/sm`. It is built and run on Linux, macOS, Windows, OpenBSD, and FreeBSD.
+This builds the release binary and installs `sm` to `~/.cargo/bin/`. Make sure `~/.cargo/bin` is in your `PATH`.
 
 ## Quick start
 
-```bash
-# Set the default workspace root (optional)
-sm config set default_workspace_root ~/securitysmith
-
-# Create a workspace under the default root
-sm new --name acme-2026
-cd ~/securitysmith/acme-2026
-
-# Add a client
-sm client add --short acme --display "Acme Corporation"
-
-# List clients
-sm client list
+```sh
+sm new                         # create a workspace
+sm new acme/web/initial        # create client, project, and engagement
+sm finding acme/web/initial --title "Stored XSS"
+sm ls acme/web/initial --findings
+sm status                      # see active engagements across all workspaces
+sm check                       # workspace health check
 ```
 
-## Workspace layout
+## Documentation
 
-```
-~/securitysmith/
-└── acme-2026/
-    ├── config.toml
-    └── clients/
-        └── acme/
-            └── client-config.toml
-```
+Full usage guides in [`docs/`](docs/README.md). Run `sm --help` for command reference.
 
-## Configuration
+## License
 
-Global config lives at the OS default config location under `securitysmith/config.toml`:
-
-- Linux: `~/.config/securitysmith/config.toml`
-- macOS: `~/Library/Application Support/securitysmith/config.toml`
-- Windows: `%APPDATA%\securitysmith\config.toml`
-
-It stores:
-
-- `default_workspace_root` — default parent directory for `sm new --name ...` (defaults to `~/securitysmith` if not set)
-- known workspaces
-
-## Status
-
-This project is pivoting from a Tauri desktop application to a pure CLI. Only the commands listed under *What is implemented* are functional. The rest of the pentesting lifecycle (projects, engagements, findings, reports, SOWs, exports, backups) is being rebuilt.
+Private project.

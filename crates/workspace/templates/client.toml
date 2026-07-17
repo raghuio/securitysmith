@@ -1,0 +1,31 @@
+version = 1
+
+[client]
+status = "active"
+priority = "medium"
+email = ""
+phone = ""
+tags = []
+created = ""
+updated = ""
+contacts = []
+
+[client.id]
+prefix = ""
+
+[client.defaults]
+severity = ""
+status = ""
+report_format = ""
+sow_format = ""
+
+[client.report]
+template = ""
+include_findings = ""
+exclude_status = []
+
+[client.sow]
+template = ""
+include_requirements = ""
+include_scope = ""
+sections = []

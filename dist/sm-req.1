@@ -1,0 +1,41 @@
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.TH SM-REQ 1  "req " 
+.SH NAME
+req \- Manage requirements
+.SH SYNOPSIS
+\fBreq\fR [\fB\-\-title\fR] [\fB\-\-status\fR] [\fB\-\-no\-template\fR] [\fB\-h\fR|\fB\-\-help\fR] <\fIPATH_OR_ID\fR> 
+.SH DESCRIPTION
+Manage requirements
+.SH OPTIONS
+.TP
+\fB\-\-title\fR \fI<TITLE>\fR
+Title for new requirement
+.TP
+\fB\-\-status\fR \fI<STATUS>\fR
+Update requirement status
+.br
+
+.br
+\fIPossible values:\fR
+.RS 14
+.IP \(bu 2
+open
+.IP \(bu 2
+in_progress
+.IP \(bu 2
+verified
+.IP \(bu 2
+rejected
+.IP \(bu 2
+deferred
+.RE
+.TP
+\fB\-\-no\-template\fR
+Skip template
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print help
+.TP
+<\fIPATH_OR_ID\fR>
+Engagement path or requirement ID

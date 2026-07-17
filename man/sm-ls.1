@@ -1,0 +1,72 @@
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.TH SM-LS 1  "ls " 
+.SH NAME
+ls \- List entities
+.SH SYNOPSIS
+\fBls\fR [\fB\-\-findings\fR] [\fB\-\-requirements\fR] [\fB\-\-notes\fR] [\fB\-\-scope\fR] [\fB\-\-sections\fR] [\fB\-\-documents\fR] [\fB\-\-severity\fR] [\fB\-\-status\fR] [\fB\-h\fR|\fB\-\-help\fR] [\fIPATH\fR] 
+.SH DESCRIPTION
+List entities
+.SH OPTIONS
+.TP
+\fB\-\-findings\fR
+List findings only
+.TP
+\fB\-\-requirements\fR
+List requirements only
+.TP
+\fB\-\-notes\fR
+List notes only
+.TP
+\fB\-\-scope\fR
+Show scope.md
+.TP
+\fB\-\-sections\fR
+List document sections
+.TP
+\fB\-\-documents\fR
+List custom documents
+.TP
+\fB\-\-severity\fR \fI<SEVERITY>\fR
+Filter findings by severity
+.br
+
+.br
+\fIPossible values:\fR
+.RS 14
+.IP \(bu 2
+critical
+.IP \(bu 2
+high
+.IP \(bu 2
+medium
+.IP \(bu 2
+low
+.IP \(bu 2
+informational
+.RE
+.TP
+\fB\-\-status\fR \fI<STATUS>\fR
+Filter findings by status
+.br
+
+.br
+\fIPossible values:\fR
+.RS 14
+.IP \(bu 2
+open
+.IP \(bu 2
+fixed
+.IP \(bu 2
+false_positive
+.IP \(bu 2
+not_applicable
+.IP \(bu 2
+risk_accepted
+.RE
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print help
+.TP
+[\fIPATH\fR]
+Path to list children of

@@ -13,26 +13,40 @@ pub struct TestWorkspace {
     pub root: Utf8PathBuf,
 }
 
+impl Default for TestWorkspace {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TestWorkspace {
     /// Create a new workspace in a temp directory.
     pub fn new() -> Self {
         let tmp = TempDir::new().unwrap();
         let root = Utf8PathBuf::from_path_buf(tmp.path().to_path_buf()).unwrap();
 
-        let config = "[workspace]\nversion = 1\nname = \"test\"\ncreated = \"2026-07-08\"\n";
-        fs::write(root.join("config.toml"), config).unwrap();
+        let config = crate::WorkspaceConfig::named("test");
+        let toml = toml::to_string_pretty(&config).unwrap();
+        fs::write(root.join("config.toml"), toml).unwrap();
 
         Self { _tmp: tmp, root }
+    }
+
+    /// Create a Workspace view from this test workspace.
+    pub fn workspace(&self) -> crate::Workspace {
+        crate::Workspace::load(&self.root).unwrap()
     }
 
     /// Create a client directory with config.toml.
     pub fn create_client(&self, name: &str) -> Utf8PathBuf {
         let dir = self.root.join(name);
         fs::create_dir_all(&dir).unwrap();
-        let config = format!(
-            "[client]\nstatus = \"active\"\npriority = \"medium\"\ncreated = \"2026-07-08\"\nupdated = \"2026-07-08\"\n\n[client.id]\nprefix = \"TEST\"\n"
-        );
-        fs::write(dir.join("config.toml"), config).unwrap();
+        let mut config = crate::entities::ClientConfig::default();
+        config.client.id = Some(crate::entities::ClientIdSection {
+            prefix: name.to_uppercase(),
+        });
+        let toml = toml::to_string_pretty(&config).unwrap();
+        fs::write(dir.join("config.toml"), toml).unwrap();
         dir
     }
 
@@ -40,10 +54,16 @@ impl TestWorkspace {
     pub fn create_project(&self, client: &str, project: &str) -> Utf8PathBuf {
         let dir = self.root.join(client).join(project);
         fs::create_dir_all(&dir).unwrap();
-        let config = format!(
-            "[project]\nabbreviation = \"WEB\"\nstatus = \"active\"\npriority = \"medium\"\n\n[project.id]\nsequence = 1\npadding = 3\n"
-        );
-        fs::write(dir.join("config.toml"), config).unwrap();
+        let mut config = crate::entities::ProjectConfig::default();
+        let abbr = project
+            .split('_')
+            .next()
+            .map(|w| w.chars().take(3).collect::<String>())
+            .unwrap_or_else(|| "GEN".to_string())
+            .to_uppercase();
+        config.project.abbreviation = abbr;
+        let toml = toml::to_string_pretty(&config).unwrap();
+        fs::write(dir.join("config.toml"), toml).unwrap();
         dir
     }
 
@@ -51,8 +71,9 @@ impl TestWorkspace {
     pub fn create_engagement(&self, client: &str, project: &str, engagement: &str) -> Utf8PathBuf {
         let dir = self.root.join(client).join(project).join(engagement);
         fs::create_dir_all(&dir).unwrap();
-        let config = "[engagement]\ntype = \"assessment\"\nstatus = \"in_progress\"\nstart_date = \"2026-07-01\"\nend_date = \"2026-07-14\"\n";
-        fs::write(dir.join("config.toml"), config).unwrap();
+        let config = crate::entities::EngagementConfig::default();
+        let toml = toml::to_string_pretty(&config).unwrap();
+        crate::atomic_write(&dir.join("config.toml"), toml.as_bytes()).unwrap();
         dir
     }
 

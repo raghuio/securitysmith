@@ -1,0 +1,39 @@
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.TH SM-REPORT 1  "report " 
+.SH NAME
+report \- Build a report
+.SH SYNOPSIS
+\fBreport\fR [\fB\-\-format\fR] [\fB\-\-template\fR] [\fB\-\-to\fR] [\fB\-h\fR|\fB\-\-help\fR] <\fIPATH\fR> 
+.SH DESCRIPTION
+Build a report
+.SH OPTIONS
+.TP
+\fB\-\-format\fR \fI<FORMAT>\fR
+Output format (markdown, html, pdf, json)
+.br
+
+.br
+\fIPossible values:\fR
+.RS 14
+.IP \(bu 2
+markdown
+.IP \(bu 2
+html
+.IP \(bu 2
+pdf
+.IP \(bu 2
+json
+.RE
+.TP
+\fB\-\-template\fR \fI<TEMPLATE>\fR
+Template slug
+.TP
+\fB\-\-to\fR \fI<TO>\fR
+Output file path
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print help
+.TP
+<\fIPATH\fR>
+Engagement, project, or client path

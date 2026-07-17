@@ -72,7 +72,19 @@ impl GlobalConfig {
             return Ok(config);
         }
         let contents = fs::read_to_string(&path)?;
-        let config: GlobalConfig = toml::from_str(&contents)?;
+        let mut config: GlobalConfig = toml::from_str(&contents)?;
+
+        // Auto-clean: remove stale workspace entries (paths that no longer exist).
+        // This runs on every load so the user never needs to manually run `sm check --fix`
+        // for routine cleanup.
+        let before = config.workspaces.len();
+        config
+            .workspaces
+            .retain(|ws| ws.path.as_std_path().exists());
+        if config.workspaces.len() != before {
+            config.save()?;
+        }
+
         Ok(config)
     }
 
@@ -81,17 +93,20 @@ impl GlobalConfig {
         let _ = ensure_config_dir()?;
         let path = config_path()?;
         let toml = toml::to_string_pretty(self)?;
-
-        let tmp = path.with_extension("toml.tmp");
-        fs::write(&tmp, toml.as_bytes())?;
-        fs::rename(&tmp, &path)?;
-
+        crate::atomic_write(&path, toml.as_bytes())?;
         Ok(())
     }
 
     /// Get the default workspace path.
+    /// Returns the configured default, or the built-in default `~/securitysmith`
+    /// if not explicitly set (FR-3).
     pub fn default_workspace(&self) -> Option<Utf8PathBuf> {
-        self.global.default_workspace.clone()
+        self.global.default_workspace.clone().or_else(|| {
+            dirs::home_dir().map(|h| {
+                Utf8PathBuf::from_path_buf(h.join("securitysmith"))
+                    .unwrap_or_else(|_| Utf8PathBuf::from("~/securitysmith"))
+            })
+        })
     }
 
     /// Set the default workspace path.

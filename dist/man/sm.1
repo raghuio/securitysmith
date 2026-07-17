@@ -1,0 +1,70 @@
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.TH SM 1  "sm 0.1.0" 
+.SH NAME
+sm \- CLI for managing security projects and engagements
+.SH SYNOPSIS
+\fBsm\fR [\fB\-w\fR|\fB\-\-workspace\fR] [\fB\-h\fR|\fB\-\-help\fR] [\fB\-V\fR|\fB\-\-version\fR] <\fIsubcommands\fR>
+.SH DESCRIPTION
+CLI for managing security projects and engagements
+.SH OPTIONS
+.TP
+\fB\-w\fR, \fB\-\-workspace\fR \fI<WORKSPACE>\fR
+Workspace by name (from global config) or path
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print help
+.TP
+\fB\-V\fR, \fB\-\-version\fR
+Print version
+.SH SUBCOMMANDS
+.TP
+sm\-new(1)
+Create a new workspace, client, project, engagement, or template
+.TP
+sm\-ls(1)
+List entities
+.TP
+sm\-show(1)
+Show entity details
+.TP
+sm\-edit(1)
+Open config in $EDITOR
+.TP
+sm\-rm(1)
+Remove an entity (requires \-\-force)
+.TP
+sm\-status(1)
+Show current workspace info
+.TP
+sm\-check(1)
+Check workspace health
+.TP
+sm\-config(1)
+Show or set global configuration
+.TP
+sm\-stats(1)
+Show workspace or client statistics
+.TP
+sm\-finding(1)
+Manage findings
+.TP
+sm\-req(1)
+Manage requirements
+.TP
+sm\-scope(1)
+Open scope.md in editor
+.TP
+sm\-note(1)
+Create a quick note
+.TP
+sm\-report(1)
+Build a report
+.TP
+sm\-sow(1)
+Build a SOW
+.TP
+sm\-help(1)
+Print this message or the help of the given subcommand(s)
+.SH VERSION
+v0.1.0

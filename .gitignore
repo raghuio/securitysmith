@@ -1,32 +1,14 @@
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-
-node_modules
-dist
-dist-ssr
+/target/
+core.*
+*.tmp
 *.local
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
+# Editor / OS
 .idea
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+*.swp
+*.swo
 
-# Semgrep local config and cached rules (never commit)
-.semgrep/
-.semgrep.yml
-
-/target/
+# AI governance docs (tracked in workspace repo, not project repo)
 .ai/
 AGENTS.md

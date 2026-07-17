@@ -135,7 +135,7 @@ pub fn write_file(
     let content = serialize(frontmatter, body)?;
 
     // Atomic write: write to temp file, then rename
-    let tmp_path = path.with_extension("md.tmp");
+    let tmp_path = path.with_extension("tmp");
 
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
@@ -196,7 +196,6 @@ pub fn update_field(
 mod tests {
     use super::*;
     use serde_yaml::Value;
-    use std::fs;
 
     #[test]
     fn parse_with_frontmatter() {

@@ -1,0 +1,31 @@
+version = 1
+
+[project]
+abbreviation = ""
+status = "active"
+priority = "medium"
+start_date = ""
+end_date = ""
+tags = []
+
+[project.id]
+sequence = 1
+padding = 3
+requirement_sequence = 1
+
+[project.defaults]
+severity = ""
+status = ""
+report_format = ""
+sow_format = ""
+
+[project.report]
+template = ""
+include_findings = ""
+exclude_status = []
+
+[project.sow]
+template = ""
+include_requirements = ""
+include_scope = ""
+sections = []

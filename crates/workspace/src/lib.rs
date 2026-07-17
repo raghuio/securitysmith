@@ -1,11 +1,28 @@
+#![allow(clippy::collapsible_if)]
 use camino::{Utf8Path, Utf8PathBuf};
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use thiserror::Error;
 
-pub mod client;
+pub mod check;
+pub mod checklists;
+pub mod credentials;
+pub mod documents;
+pub mod entities;
+pub mod evidence;
+pub mod findings;
 pub mod global;
+pub mod import;
+pub mod notes;
+pub mod render;
+pub mod requirements;
+pub mod scope;
+pub mod search;
+pub mod sections;
+pub mod stats;
+pub mod templates;
+pub mod typst_engine;
 
 #[cfg(test)]
 pub mod test_helpers;
@@ -20,6 +37,8 @@ pub enum WorkspaceError {
     Serialize(#[from] toml::ser::Error),
     #[error("TOML deserialization error: {0}")]
     Deserialize(#[from] toml::de::Error),
+    #[error("Frontmatter error: {0}")]
+    Frontmatter(#[from] ss_frontmatter::FrontmatterError),
     #[error("Not a SecuritySmith workspace")]
     NotAWorkspace,
     #[error("Workspace already exists at {0}")]
@@ -36,6 +55,14 @@ pub enum WorkspaceError {
     InvalidName(String),
     #[error("Reserved name: {0}")]
     ReservedName(String),
+    #[error("Missing required field: {0}")]
+    MissingField(String),
+    #[error("Invalid date: {0}")]
+    InvalidDate(String),
+    #[error("Invalid status or severity: {0}")]
+    InvalidStatusSeverity(String),
+    #[error("Symlink escapes the workspace: {0}")]
+    SymlinkEscape(Utf8PathBuf),
 }
 
 /// Workspace config.toml content.
@@ -49,6 +76,8 @@ pub struct WorkspaceHeader {
     pub version: u32,
     pub name: String,
     pub created: String,
+    pub defaults: entities::DefaultsSection,
+    pub require_credentials_ready: bool,
 }
 
 impl WorkspaceConfig {
@@ -58,6 +87,8 @@ impl WorkspaceConfig {
                 version: 1,
                 name: name.into(),
                 created: Utc::now().format("%Y-%m-%d").to_string(),
+                defaults: entities::DefaultsSection::default(),
+                require_credentials_ready: false,
             },
         }
     }
@@ -99,7 +130,14 @@ impl Workspace {
 
         fs::create_dir_all(&root)?;
 
-        let config = WorkspaceConfig::named(name);
+        // Use built-in workspace config template, fill in dynamic fields.
+        // No workspace-level override possible here — the workspace doesn't exist yet.
+        let template =
+            entities::builtin_config_template("workspace").ok_or(WorkspaceError::NotAWorkspace)?;
+        let mut config: WorkspaceConfig = toml::from_str(template)?;
+        config.workspace.name = name.into();
+        config.workspace.created = Utc::now().format("%Y-%m-%d").to_string();
+
         let toml = toml::to_string_pretty(&config)?;
         atomic_write(&config_path, toml.as_bytes())?;
 
@@ -108,16 +146,18 @@ impl Workspace {
 
     /// Find a workspace by walking up from the given directory.
     pub fn find(start: impl AsRef<Utf8Path>) -> Result<Self, WorkspaceError> {
+        let root = Self::find_root(start)?;
+        Self::load(&root)
+    }
+
+    /// Find workspace root by walking up from the given directory.
+    /// Returns the path only — does not parse config.toml.
+    pub fn find_root(start: impl AsRef<Utf8Path>) -> Result<Utf8PathBuf, WorkspaceError> {
         let mut current = start.as_ref().to_path_buf();
         loop {
             let config_path = current.join(CONFIG_FILE);
             if config_path.exists() {
-                let contents = fs::read_to_string(&config_path)?;
-                let config: WorkspaceConfig = toml::from_str(&contents)?;
-                return Ok(Self {
-                    root: current,
-                    config,
-                });
+                return Ok(current);
             }
             match current.parent() {
                 Some(parent) => current = parent.to_path_buf(),
@@ -141,33 +181,53 @@ impl Workspace {
     /// Resolve which workspace to use.
     /// Priority: explicit > current directory > default workspace
     pub fn resolve(explicit: Option<&str>) -> Result<Self, WorkspaceError> {
+        let root = Self::resolve_root(explicit)?;
+        Self::load(&root)
+    }
+
+    /// Resolve workspace root path without parsing config.
+    /// Same priority as `resolve()` but returns path only.
+    /// Used by the CLI to scan for migration before loading.
+    pub fn resolve_root(explicit: Option<&str>) -> Result<Utf8PathBuf, WorkspaceError> {
         // 1. Explicit -w flag
         if let Some(spec) = explicit {
             // Try as a registered workspace name first
             let global = global::GlobalConfig::load()?;
             if let Some(ws) = global.find_workspace(spec) {
-                return Self::load(&ws.path);
+                return Ok(ws.path.clone());
             }
             // Try as a path
             let path = expand_tilde(spec);
             if path.join(CONFIG_FILE).exists() {
-                return Self::load(&path);
+                return Ok(path);
             }
             return Err(WorkspaceError::NotAWorkspace);
         }
 
         // 2. Walk up from current directory
         let cwd = current_dir()?;
-        if let Ok(ws) = Self::find(&cwd) {
-            return Ok(ws);
+        if let Ok(root) = Self::find_root(&cwd) {
+            return Ok(root);
         }
 
-        // 3. Fall back to default workspace
+        // 3. Fall back to default workspace.
+        // If the default workspace doesn't have config.toml yet, auto-create it.
+        // This makes `sm new acme` work from anywhere — the default workspace
+        // is initialized on first use (FR-3, FR-21).
         let global = global::GlobalConfig::load()?;
-        if let Some(default) = global.default_workspace()
-            && default.join(CONFIG_FILE).exists()
-        {
-            return Self::load(&default);
+        if let Some(default) = global.default_workspace() {
+            if default.join(CONFIG_FILE).exists() {
+                return Ok(default);
+            }
+            // Auto-create the default workspace if the directory exists or can be created
+            if default.exists() || std::fs::create_dir_all(&default).is_ok() {
+                let ws = Self::init(&default)?;
+                let mut global = global;
+                let name = ws.config.workspace.name.clone();
+                global.register_workspace(&name, &ws.root);
+                global.save()?;
+                return Ok(ws.root);
+            }
         }
 
         Err(WorkspaceError::NotAWorkspace)
@@ -206,6 +266,43 @@ pub fn is_absolute_path(s: &str) -> bool {
     s.starts_with('/') || s.starts_with('~')
 }
 
+/// Verify that a path does not escape the workspace via symlinks.
+///
+/// If the path exists, canonicalizes it and checks it's inside the canonical
+/// workspace root. If the path doesn't exist yet (creation), checks the
+/// existing parent components for symlinks.
+///
+/// Returns Ok if the path is safe, Err(SymlinkEscape) if it escapes.
+pub fn check_symlink_escape(ws_root: &Utf8Path, path: &Utf8Path) -> Result<(), WorkspaceError> {
+    let canonical_root = fs::canonicalize(ws_root.as_std_path())?;
+
+    // If the full path exists, canonicalize and check.
+    if path.exists() {
+        let canonical = fs::canonicalize(path.as_std_path())?;
+        if !canonical.starts_with(&canonical_root) {
+            return Err(WorkspaceError::SymlinkEscape(path.to_path_buf()));
+        }
+        return Ok(());
+    }
+
+    // Path doesn't exist yet (creation). Walk up to the deepest existing
+    // ancestor and check from there.
+    let mut existing = path.to_path_buf();
+    while !existing.exists() {
+        match existing.parent() {
+            Some(p) if p != existing => existing = p.to_path_buf(),
+            _ => return Ok(()), // reached root or no parent
+        }
+    }
+
+    let canonical_existing = fs::canonicalize(existing.as_std_path())?;
+    if !canonical_existing.starts_with(&canonical_root) {
+        return Err(WorkspaceError::SymlinkEscape(path.to_path_buf()));
+    }
+
+    Ok(())
+}
+
 /// Expand ~ to home directory.
 pub fn expand_tilde(s: &str) -> Utf8PathBuf {
     if let Some(rest) = s.strip_prefix("~/")
@@ -228,9 +325,25 @@ pub fn current_dir() -> Result<Utf8PathBuf, WorkspaceError> {
     })
 }
 
+/// Get the current date as a UTC string in YYYY-MM-DD format.
+pub fn utc_today() -> String {
+    Utc::now().format("%Y-%m-%d").to_string()
+}
+
+/// Derive a URL-safe slug from a title.
+/// Lowercase, non-alphanumeric → underscore, trimmed.
+pub fn slug_from_title(title: &str) -> String {
+    let slug: String = title
+        .to_lowercase()
+        .chars()
+        .map(|c| if c.is_alphanumeric() { c } else { '_' })
+        .collect();
+    slug.trim_matches('_').to_string()
+}
+
 /// Atomic write: write to temp file, then rename.
-fn atomic_write(path: &Utf8Path, content: &[u8]) -> Result<(), WorkspaceError> {
-    let tmp_path = path.with_extension("toml.tmp");
+pub(crate) fn atomic_write(path: &Utf8Path, content: &[u8]) -> Result<(), WorkspaceError> {
+    let tmp_path = path.with_extension("tmp");
 
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
@@ -246,6 +359,69 @@ fn atomic_write(path: &Utf8Path, content: &[u8]) -> Result<(), WorkspaceError> {
     fs::rename(&tmp_path, path)?;
 
     Ok(())
+}
+
+/// Open a file in `$EDITOR`. Falls back to `vi` if `$EDITOR` is not set.
+/// Splits `$EDITOR` on whitespace: first token is the program, remaining tokens
+/// are arguments, and the file path is the final argument. No shell invocation
+/// — safe against injection on file paths. Works on all target platforms.
+pub fn spawn_editor(path: &Utf8Path) -> Result<(), WorkspaceError> {
+    let editor = std::env::var("EDITOR").unwrap_or_else(|_| {
+        eprintln!("warning: $EDITOR not set, falling back to vi");
+        "vi".to_string()
+    });
+
+    let mut parts = editor.split_whitespace();
+    let prog = parts.next().unwrap_or("vi");
+    let args = parts.collect::<Vec<_>>();
+
+    let mut cmd = std::process::Command::new(prog);
+    for a in &args {
+        cmd.arg(a);
+    }
+    let status = cmd.arg(path.as_std_path()).status()?;
+
+    if !status.success() {
+        return Err(WorkspaceError::Io(std::io::Error::other(format!(
+            "{} exited with non-zero status",
+            editor
+        ))));
+    }
+
+    Ok(())
+}
+
+/// How an item was removed.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RemovalMethod {
+    /// Moved to OS trash (recoverable).
+    Trashed,
+    /// Permanently deleted (no trash available on this platform).
+    PermanentlyDeleted,
+}
+
+/// Move a file or directory to OS trash. Falls back to permanent deletion
+/// with a warning when no trash is available (headless servers, OpenBSD
+/// without desktop, etc.).
+///
+/// Returns `RemovalMethod::Trashed` if the item was moved to trash, or
+/// `RemovalMethod::PermanentlyDeleted` if the fallback was used.
+pub fn trash_or_delete(path: &Utf8Path) -> Result<RemovalMethod, WorkspaceError> {
+    match trash::delete(path.as_std_path()) {
+        Ok(()) => Ok(RemovalMethod::Trashed),
+        Err(e) => {
+            eprintln!(
+                "warning: No trash available on this system ({}). Deleted permanently.",
+                e
+            );
+            if path.is_dir() {
+                fs::remove_dir_all(path)?;
+            } else {
+                fs::remove_file(path)?;
+            }
+            Ok(RemovalMethod::PermanentlyDeleted)
+        }
+    }
 }
 
 #[cfg(test)]

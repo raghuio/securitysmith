@@ -1,0 +1,36 @@
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.TH SM-SCOPE 1  "scope " 
+.SH NAME
+scope \- Open scope.md in editor or export
+.SH SYNOPSIS
+\fBscope\fR [\fB\-\-export\fR] [\fB\-\-to\fR] [\fB\-h\fR|\fB\-\-help\fR] <\fIPATH\fR> 
+.SH DESCRIPTION
+Open scope.md in editor or export
+.SH OPTIONS
+.TP
+\fB\-\-export\fR \fI<EXPORT>\fR
+Export format (markdown, html, pdf, json)
+.br
+
+.br
+\fIPossible values:\fR
+.RS 14
+.IP \(bu 2
+markdown
+.IP \(bu 2
+html
+.IP \(bu 2
+pdf
+.IP \(bu 2
+json
+.RE
+.TP
+\fB\-\-to\fR \fI<TO>\fR
+Output path for export
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print help
+.TP
+<\fIPATH\fR>
+Engagement path

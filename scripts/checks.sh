@@ -61,7 +61,7 @@ echo ""
 run_check "cargo fmt -- --check" cargo fmt -- --check || { echo ""; echo "Fix: cargo fmt"; exit 1; }
 
 # 2. Linting (zero warnings allowed)
-run_check "cargo clippy -- -D warnings" cargo clippy -- -D warnings || { echo ""; echo "Fix: cargo clippy --fix"; exit 1; }
+run_check "cargo clippy --all-targets -- -D warnings" cargo clippy --all-targets -- -D warnings || { echo ""; echo "Fix: cargo clippy --fix"; exit 1; }
 
 # 3. Tests
 run_check "cargo test" cargo test || { echo ""; echo "Fix failing tests"; exit 1; }

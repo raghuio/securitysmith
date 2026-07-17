@@ -3,6 +3,12 @@ name = "securitysmith"
 version.workspace = true
 edition.workspace = true
 default-run = "sm"
+description = "Privacy-first CLI tool for security consultants to manage pentesting engagements"
+license = "MIT"
+publish = false
+
+[package.metadata.deb]
+copyright = "© SecuritySmith Project"
 
 [[bin]]
 name = "sm"
@@ -16,10 +22,20 @@ path = "src/bin/gen-man.rs"
 clap = { workspace = true }
 ss-workspace = { workspace = true }
 ss-frontmatter = { workspace = true }
+serde_yaml = { workspace = true }
+toml = { workspace = true }
 camino = { workspace = true }
 dirs = { workspace = true }
 thiserror = { workspace = true }
 clap_mangen = "0.3.0"
+rpassword = { workspace = true }
+
+[target.'cfg(target_os = "openbsd")'.dependencies]
+pledge = "0.4"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+seccompiler = "0.5"
+libc = "0.2"
 
 [dev-dependencies]
 tempfile = { workspace = true }

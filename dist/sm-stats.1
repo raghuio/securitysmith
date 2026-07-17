@@ -1,0 +1,19 @@
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.TH SM-STATS 1  "stats " 
+.SH NAME
+stats \- Show workspace or client statistics
+.SH SYNOPSIS
+\fBstats\fR [\fB\-\-all\fR] [\fB\-h\fR|\fB\-\-help\fR] [\fICLIENT\fR] 
+.SH DESCRIPTION
+Show workspace or client statistics
+.SH OPTIONS
+.TP
+\fB\-\-all\fR
+Aggregate across all known workspaces
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print help
+.TP
+[\fICLIENT\fR]
+Client name for per\-client stats

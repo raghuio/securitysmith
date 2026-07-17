@@ -11,6 +11,22 @@ thiserror = { workspace = true }
 camino = { workspace = true }
 chrono = { workspace = true }
 dirs = { workspace = true }
+ss-frontmatter = { workspace = true }
+serde_yaml = { workspace = true }
+pulldown-cmark = { workspace = true }
+typst = { workspace = true }
+typst-as-lib = { workspace = true }
+typst-pdf = { workspace = true }
+typst-assets = { workspace = true }
+sha2 = { workspace = true }
+quick-xml = { workspace = true }
+csv = { workspace = true }
+chacha20poly1305 = { workspace = true }
+rand = { workspace = true }
+argon2 = { workspace = true }
+zeroize = { workspace = true }
+rpassword = { workspace = true }
+trash = "5"
 
 [dev-dependencies]
 tempfile = { workspace = true }

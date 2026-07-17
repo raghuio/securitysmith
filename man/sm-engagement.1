@@ -1,0 +1,52 @@
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.TH SM-ENGAGEMENT 1  "engagement " 
+.SH NAME
+engagement \- Manage engagement status and fields
+.SH SYNOPSIS
+\fBengagement\fR [\fB\-\-status\fR] [\fB\-\-start\-date\fR] [\fB\-\-end\-date\fR] [\fB\-\-credentials\-ready\fR] [\fB\-\-retest\fR] [\fB\-\-from\fR] [\fB\-h\fR|\fB\-\-help\fR] <\fIPATH\fR> 
+.SH DESCRIPTION
+Manage engagement status and fields
+.SH OPTIONS
+.TP
+\fB\-\-status\fR \fI<STATUS>\fR
+Update engagement status (planned, in_progress, paused, completed, closed)
+.br
+
+.br
+\fIPossible values:\fR
+.RS 14
+.IP \(bu 2
+draft
+.IP \(bu 2
+planned
+.IP \(bu 2
+in_progress
+.IP \(bu 2
+paused
+.IP \(bu 2
+completed
+.IP \(bu 2
+closed
+.RE
+.TP
+\fB\-\-start\-date\fR \fI<START_DATE>\fR
+Update start date (YYYY\-MM\-DD)
+.TP
+\fB\-\-end\-date\fR \fI<END_DATE>\fR
+Update end date (YYYY\-MM\-DD)
+.TP
+\fB\-\-credentials\-ready\fR
+Toggle credential readiness
+.TP
+\fB\-\-retest\fR
+Create a retest engagement (use with \-\-from)
+.TP
+\fB\-\-from\fR \fI<FROM>\fR
+Original engagement to copy findings from (for \-\-retest)
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print help
+.TP
+<\fIPATH\fR>
+Engagement path (client/project/engagement)

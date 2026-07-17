@@ -71,7 +71,7 @@ install_system() {
 build_deb() {
     ensure_subcmd deb cargo-deb
     log "Creating .deb (cargo deb)..."
-    (cd "$PROJECT_DIR" && cargo deb --output "$DIST_DIR/")
+    (cd "$PROJECT_DIR" && cargo deb -p securitysmith --output "$DIST_DIR/")
     ok ".deb package created in $DIST_DIR"
 }
 
@@ -100,18 +100,18 @@ build_tar() {
 # --- Man pages (clap_mangen) ---
 build_man() {
     log "Generating man pages (cargo run --bin gen-man)..."
-    (cd "$PROJECT_DIR" && cargo run --bin gen-man --release -- --output "$DIST_DIR/sm.1")
-    ok "Man page: $DIST_DIR/sm.1"
-    log "Installing man page to $PREFIX/share/man/man1/sm.1..."
-    MAN_DIR="$PREFIX/share/man/man1"
+    (cd "$PROJECT_DIR" && cargo run --bin gen-man --release -- --output "$DIST_DIR/man")
+    ok "Man pages generated in $DIST_DIR/man"
+    log "Installing man pages to man1/..."
+    MAN_DIR="${PREFIX:-/usr/local}/share/man/man1"
     if mkdir -p "$MAN_DIR" 2>/dev/null; then
-        cp "$DIST_DIR/sm.1" "$MAN_DIR/sm.1"
+        cp "$DIST_DIR"/man/sm*.1 "$MAN_DIR/"
     else
         SUDO_CMD="${SUDO:-sudo}"
         $SUDO_CMD mkdir -p "$MAN_DIR"
-        $SUDO_CMD cp "$DIST_DIR/sm.1" "$MAN_DIR/sm.1"
+        $SUDO_CMD cp "$DIST_DIR"/man/sm*.1 "$MAN_DIR/"
     fi
-    ok "Installed: $MAN_DIR/sm.1"
+    ok "Installed man pages to $MAN_DIR"
 }
 
 # ─── Main ───────────────────────────────────────────────────

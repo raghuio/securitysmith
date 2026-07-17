@@ -1,0 +1,45 @@
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.TH SM-SOW 1  "sow " 
+.SH NAME
+sow \- Build a SOW
+.SH SYNOPSIS
+\fBsow\fR [\fB\-\-format\fR] [\fB\-\-template\fR] [\fB\-\-to\fR] [\fB\-\-sections\fR] [\fB\-\-exclude\fR] [\fB\-h\fR|\fB\-\-help\fR] <\fIPATH\fR> 
+.SH DESCRIPTION
+Build a SOW
+.SH OPTIONS
+.TP
+\fB\-\-format\fR \fI<FORMAT>\fR
+Output format (markdown, html, pdf, json)
+.br
+
+.br
+\fIPossible values:\fR
+.RS 14
+.IP \(bu 2
+markdown
+.IP \(bu 2
+html
+.IP \(bu 2
+pdf
+.IP \(bu 2
+json
+.RE
+.TP
+\fB\-\-template\fR \fI<TEMPLATE>\fR
+Template slug
+.TP
+\fB\-\-to\fR \fI<TO>\fR
+Output file path
+.TP
+\fB\-\-sections\fR \fI<SECTIONS>\fR
+Override which sections to include (comma\-separated)
+.TP
+\fB\-\-exclude\fR \fI<EXCLUDE>\fR
+Exclude specific sections (comma\-separated)
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print help
+.TP
+<\fIPATH\fR>
+Engagement, project, or client path

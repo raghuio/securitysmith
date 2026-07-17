@@ -1,0 +1,16 @@
+[package]
+name = "securitysmith-fuzz"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+securitysmith-workspace = { path = "..", package = "securitysmith-workspace" }
+libfuzzer-sys = "0.4"
+
+[[bin]]
+name = "md_to_typst"
+path = "fuzz_targets/md_to_typst.rs"
+
+[profile.release]
+debug = true
